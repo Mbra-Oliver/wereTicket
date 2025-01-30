@@ -28,7 +28,7 @@
                 ->select('slug', 'event_id', 'title')
                 ->first();
         }
-        
+
         $slug = $eventInfos ? $eventInfos->slug : '';
       @endphp
       <li class="nav-item">
@@ -125,11 +125,7 @@
               @php
                 $date = Carbon\Carbon::parse($booking->event_date)->format('Y-m-d');
                 $time = Carbon\Carbon::parse($booking->event_date)->format('H:i');
-                $evnt = @$booking->evnt
-                    ->dates()
-                    ->where('start_date', $date)
-                    ->where('start_time', $time)
-                    ->first();
+                $evnt = @$booking->evnt->dates()->where('start_date', $date)->where('start_time', $time)->first();
               @endphp
               <div class="row">
                 <div class="col-lg-4">
@@ -280,10 +276,17 @@
                 <strong>{{ __('Tickect Scan Status') }}</strong>
               </div>
               <div class="col-lg-8">
-                @if ($booking->scan_status == 1)
+                @php
+                  if (!is_null($booking->scanned_tickets)) {
+                      $totalScanedTickets = json_decode($booking->scanned_tickets, true);
+                  } else {
+                      $totalScanedTickets = [];
+                  }
+                @endphp
+                @if (count($totalScanedTickets) == $booking->quantity)
                   <span class="badge badge-success">{{ __('Already Scanned') }}</span>
                 @else
-                  <span class="badge badge-danger">{{ __('Not Scanned') }}</span>
+                  {{ count($totalScanedTickets) . '/' . $booking->quantity }}
                 @endif
               </div>
             </div>
@@ -397,8 +400,11 @@
                     <tr>
                       <td>
                         @php
-                          $ticket_content = App\Models\Event\TicketContent::where([['ticket_id', $variation['ticket_id']], ['language_id', $defaultLang->id]])->first();
-                          
+                          $ticket_content = App\Models\Event\TicketContent::where([
+                              ['ticket_id', $variation['ticket_id']],
+                              ['language_id', $defaultLang->id],
+                          ])->first();
+
                           $ticket = App\Models\Event\Ticket::where('id', $variation['ticket_id'])
                               ->select('pricing_type')
                               ->first();

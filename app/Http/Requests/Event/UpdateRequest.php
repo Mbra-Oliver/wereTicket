@@ -51,6 +51,7 @@ class UpdateRequest extends FormRequest
 
     if ($request['event_type'] == 'online') {
       $ruleArray['early_bird_discount_type'] = 'required';
+      $ruleArray['meeting_url'] = 'required';
       $ruleArray['discount_type'] = 'required_if:early_bird_discount_type,enable';
       $ruleArray['early_bird_discount_amount'] = 'required_if:early_bird_discount_type,enable';
       $ruleArray['early_bird_discount_date'] = 'required_if:early_bird_discount_type,enable';

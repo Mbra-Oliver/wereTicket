@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
@@ -550,7 +551,7 @@ class AdminController extends Controller
       ->groupBy('month')
       ->whereYear('created_at', '=', $date)
       ->get();
-      
+
     $monthWiseTotalProfits = DB::table('transactions')
       ->select(DB::raw('month(created_at) as month'), DB::raw('sum(tax) as total'))
       ->where('payment_status', 1)
@@ -625,5 +626,62 @@ class AdminController extends Controller
 
 
     return view('backend.admin.profit', $information);
+  }
+
+
+  //pwa
+  public function pwa()
+  {
+    if (Auth::guard('admin')->check()) {
+      return view('backend.pwa.index');
+    } else {
+      return redirect()->route('admin.login');
+    }
+  }
+
+  //check_qrcode
+  public function check_qrcode(Request $request)
+  {
+
+    if (str_contains($request->booking_id, '__')) {
+      $ids = explode('__', $request->booking_id);
+      $booking_id = $ids[0];
+      $unique_id = $ids[1];
+      $check = Booking::where([['booking_id', $booking_id]])->first();
+      if ($check) {
+        // check payment status completed or not 
+        if ($check->paymentStatus == 'completed' || $check->paymentStatus == 'free') {
+          //check scanned_tickets column empty or not
+          if (is_null($check->scanned_tickets)) {
+            $scannedTicketArr = [
+              $unique_id
+            ];
+            $check->scanned_tickets = json_encode($scannedTicketArr);
+            $check->save();
+            return response()->json(['alert_type' => 'success', 'message' => 'Verified', 'booking_id' => $request->booking_id]);
+          } else {
+            //ticket random id will be insert
+            $scannedTicketArr = json_decode($check->scanned_tickets, true);
+            if (!in_array($unique_id, $scannedTicketArr)) {
+              array_push($scannedTicketArr, $unique_id);
+              $check->scanned_tickets = json_encode($scannedTicketArr);
+              $check->save();
+              return response()->json(['alert_type' => 'success', 'message' => 'Verified', 'booking_id' => $request->booking_id]);
+            } else {
+
+              return response()->json(['alert_type' => 'error', 'message' => 'Already Scanned', 'booking_id' => $request->booking_id]);
+            }
+          }
+        } elseif ($check->paymentStatus == 'pending') {
+          return response()->json(['alert_type' => 'error', 'message' => 'Payment incomplete', 'booking_id' => $request->booking_id]);
+        } elseif ($check->paymentStatus == 'rejected') {
+          return response()->json(['alert_type' => 'error', 'message' => 'Payment Rejected', 'booking_id' => $request->booking_id]);
+        }
+      } else {
+        return response()->json(['alert_type' => 'error', 'message' => 'Unverified']);
+      }
+    } else {
+      return response()->json(['alert_type' => 'error', 'message' => 'Unverified']);
+    }
   }
 }

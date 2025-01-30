@@ -212,10 +212,17 @@
                             @endif
                           </td>
                           <td>
-                            @if ($booking->scan_status == 1)
+                            @php
+                              if (!is_null($booking->scanned_tickets)) {
+                                  $totalScanedTickets = json_decode($booking->scanned_tickets, true);
+                              } else {
+                                  $totalScanedTickets = [];
+                              }
+                            @endphp
+                            @if (count($totalScanedTickets) == $booking->quantity)
                               <span class="badge badge-success">{{ __('Already Scanned') }}</span>
                             @else
-                              <span class="badge badge-danger">{{ __('Not Scanned') }}</span>
+                              {{ count($totalScanedTickets) . '/' . $booking->quantity }}
                             @endif
                           </td>
 

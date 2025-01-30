@@ -20,22 +20,34 @@ if (!function_exists('convertUtf8')) {
 if (!function_exists('createSlug')) {
   function createSlug($string)
   {
-    $slug = preg_replace('/\s+/u', '-', trim($string));
-    $slug = str_replace('/', '', $slug);
-    $slug = str_replace('?', '', $slug);
-    $slug = str_replace(',', '', $slug);
+    // Translittère les caractères accentués en leurs équivalents non accentués
+    $slug = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $string);
 
-    return mb_strtolower($slug);
+    // Remplace les espaces par des tirets
+    $slug = preg_replace('/\s+/u', '-', trim($slug));
+
+    // Supprime les caractères spéciaux non désirés
+    $slug = preg_replace('/[^a-zA-Z0-9\-]/', '', $slug);
+
+    // Convertit en minuscules
+    $slug = mb_strtolower($slug);
+
+    // Supprime les tirets multiples consécutifs
+    $slug = preg_replace('/-+/', '-', $slug);
+
+    // Supprime les tirets en début et fin de chaîne
+    $slug = trim($slug, '-');
+
+    return $slug;
   }
 }
 
-if (!function_exists('make_slug')) {
+// Supprimez la fonction `make_slug` car elle est redondante avec `createSlug`
+if (function_exists('make_slug')) {
   function make_slug($string)
   {
-    $slug = preg_replace('/\s+/u', '-', trim($string));
-    $slug = str_replace("/", "", $slug);
-    $slug = str_replace("?", "", $slug);
-    return $slug;
+    // Utilisez `createSlug` à la place pour éviter la duplication de code
+    return createSlug($string);
   }
 }
 

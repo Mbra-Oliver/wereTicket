@@ -9,6 +9,9 @@ use App\Http\Controllers\BackEnd\Event\CategoryController;
 |--------------------------------------------------------------------------
 */
 
+Route::get('admin/pwa/', 'BackEnd\AdminController@pwa')->name('admin.pwa.new');
+Route::post('admin/check-qrcode/', 'BackEnd\AdminController@check_qrcode')->name('admin.check-qrcode');
+
 Route::get('admin/get-state-city/{id}', 'BackEnd\Event\EventController@city_state')->name('get.city.state');
 
 Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function () {
@@ -87,6 +90,9 @@ Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function
     Route::post('/delete-event/{id}', 'BackEnd\Event\EventController@destroy')->name('admin.event_management.delete_event');
     Route::get('/edit-event/{id}', 'BackEnd\Event\EventController@edit')->name('admin.event_management.edit_event');
     Route::post('/event-img-dbrmv', 'BackEnd\Event\EventController@imagedbrmv')->name('admin.event.imgdbrmv');
+    //ticket settings
+    Route::get('/edit-ticket-setting/{id}', 'BackEnd\Event\EventController@editTicketSetting')->name('admin.event_management.ticket_setting');
+    Route::post('/update-ticket-setting', 'BackEnd\Event\EventController@updateTicketSetting')->name('admin.event_management.update_ticket_setting');
 
     Route::get('/delete-date/{id}', 'BackEnd\Event\EventController@deleteDate')->name('admin.event.delete.date');
 
@@ -600,6 +606,9 @@ Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function
     Route::get('/online-gateways', 'BackEnd\PaymentGateway\OnlineGatewayController@index')->name('admin.payment_gateways.online_gateways');
 
     Route::post('/update-paypal-info', 'BackEnd\PaymentGateway\OnlineGatewayController@updatePayPalInfo')->name('admin.payment_gateways.update_paypal_info');
+
+
+    Route::post('/update-cinetpay-info', 'BackEnd\PaymentGateway\OnlineGatewayController@updateCinetPayInfo')->name('admin.payment_gateways.update_cinetpay_info');
 
     Route::post('/update-instamojo-info', 'BackEnd\PaymentGateway\OnlineGatewayController@updateInstamojoInfo')->name('admin.payment_gateways.update_instamojo_info');
 

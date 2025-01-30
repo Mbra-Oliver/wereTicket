@@ -190,9 +190,8 @@ class CustomerController extends Controller
       $url = url()->previous();
     }
 
-    $login_url = route('customer.login');
     // when user have to redirect to course details page after login.
-    if (isset($url) && $url != $login_url) {
+    if (isset($url)) {
       $request->session()->put('redirectTo', $url);
     }
     return view('frontend.customer.login');
@@ -513,22 +512,13 @@ class CustomerController extends Controller
   public function authenticationViaProvider($driver)
   {
     try {
-      // at first, get the url from session which will be redirect after login
-      if (Session::has('redirectTo')) {
-        $redirectURL = Session::get('redirectTo');
-      } else {
-        $redirectURL = null;
-      }
 
       $user = Socialite::driver($driver)->user();
       $isUser = Customer::where('provider_id', $user->id)->first();
+
       if ($isUser) {
         Auth::guard('customer')->login($isUser);
-        if (!is_null($redirectURL)) {
-          return redirect()->route('customer.dashboard');
-        } else {
-          return redirect($redirectURL);
-        }
+        return redirect()->route('customer.dashboard');
       } else {
         //get and insert image
         $avatar = $user->getAvatar();
@@ -551,11 +541,7 @@ class CustomerController extends Controller
         ]);
 
         Auth::guard('customer')->login($createUser);
-        if (is_null($redirectURL)) {
-          return redirect()->route('customer.dashboard');
-        } else {
-          return redirect($redirectURL);
-        }
+        return redirect()->route('customer.dashboard');
       }
     } catch (Exception $e) {
     }

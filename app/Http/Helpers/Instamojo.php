@@ -77,7 +77,7 @@ class Instamojo
    * @param array $data contains the POST data to be sent to the API.
    * @return array decoded json returned by API.
    */
-  private function api_call($method, $path, ?array $data = null)
+  private function api_call($method, $path, array $data = null)
   {
 
     $path = (string) $path;

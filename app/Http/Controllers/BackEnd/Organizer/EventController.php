@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Requests\Event\StoreRequest;
 use App\Http\Requests\Event\UpdateRequest;
+use App\Http\Requests\TicketSettingRequest;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\Language;
@@ -556,6 +557,41 @@ class EventController extends Controller
       $event->delete();
     }
     Session::flash('success', 'Deleted Successfully');
+    return response()->json(['status' => 'success'], 200);
+  }
+  public function editTicketSetting($id)
+  {
+    $event = Event::where('organizer_id',  Auth::guard('organizer')->user()->id)->with('ticket')->findOrFail($id);
+    $information['event'] = $event;
+    return view('organizer.event.ticket-settings', $information);
+  }
+  public function updateTicketSetting(TicketSettingRequest $request)
+  {
+
+    $ticket_image = $request->file('ticket_image');
+    $ticket_logo = $request->file('ticket_logo');
+    $in = $request->all();
+    $instructions = Purifier::clean($request->instructions);
+    $event = Event::where('id', $request->event_id)->first();
+    if ($request->hasFile('ticket_image')) {
+      @unlink(public_path('assets/admin/img/event_ticket/') . $event->ticket_image);
+      $filename = time() . rand(111, 999) . '.' . $ticket_image->getClientOriginalExtension();
+      @mkdir(public_path('assets/admin/img/event_ticket/'), 0775, true);
+      $request->file('ticket_image')->move(public_path('assets/admin/img/event_ticket/'), $filename);
+      $in['ticket_image'] = $filename;
+    }
+    if ($request->hasFile('ticket_logo')) {
+      @unlink(public_path('assets/admin/img/event_ticket_logo/') . $event->ticket_logo);
+      $filename = time() . rand(111, 999) . '.' . $ticket_logo->getClientOriginalExtension();
+      @mkdir(public_path('assets/admin/img/event_ticket_logo/'), 0775, true);
+      $request->file('ticket_logo')->move(public_path('assets/admin/img/event_ticket_logo/'), $filename);
+      $in['ticket_logo'] = $filename;
+    }
+    $in['instructions'] = $instructions;
+
+    $event->update($in);
+    Session::flash('success', 'Updated Successfully');
+
     return response()->json(['status' => 'success'], 200);
   }
 }

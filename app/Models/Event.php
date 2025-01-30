@@ -29,7 +29,11 @@ class Event extends Model
     'is_featured',
     'event_type',
     'latitude',
-    'longitude'
+    'longitude',
+    'ticket_image',
+    'instructions',
+    'meeting_url',
+    'ticket_logo'
   ];
   public function ticket()
   {

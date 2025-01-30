@@ -30,8 +30,8 @@ use App\Models\Event\EventContent;
 use App\Models\Event\EventDates;
 use App\Models\Event\EventImage;
 use App\Models\Event\Ticket;
-use App\Models\Organizer;
-use PDF;
+use App\Models\Language;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -247,6 +247,7 @@ class BookingController extends Controller
             }
             $ticket->variations = json_encode($update_variation, true);
 
+
             $ticket->save();
           } elseif ($ticket->pricing_type == 'free' && $ticket->ticket_available_type == 'limited') {
             if ($ticket->ticket_available - $variation['qty'] >= 0) {
@@ -255,7 +256,22 @@ class BookingController extends Controller
             }
           }
         }
-        $variations = json_encode(Session::get('selTickets'), true);
+        $variations = Session::get('selTickets');
+        $c_variations = [];
+        foreach ($variations as $variation) {
+          for ($i = 1; $i <= $variation['qty']; $i++) {
+            $c_variations[] = [
+              'ticket_id' => $variation['ticket_id'],
+              'early_bird_dicount' => $variation['early_bird_dicount'],
+              'name' => $variation['name'],
+              'qty' => 1,
+              'price' => $variation['price'],
+              'scan_status' => 0,
+              'unique_id' => uniqid(),
+            ];
+          }
+        }
+        $variations = json_encode($c_variations, true);
       } else {
         $ticket = $event->ticket()->first();
         $ticket->ticket_available = $ticket->ticket_available - (int)$info['quantity'];
@@ -359,6 +375,7 @@ class BookingController extends Controller
 
     $language = $this->getLanguage();
     $eventContent = EventContent::where('event_id', $bookingInfo->event_id)->where('language_id', $language->id)->first();
+    $event = Event::where('id', $bookingInfo->event_id)->first();
     $eventTitle = $eventContent ? $eventContent->title : '';
 
     $websiteTitle = $info->website_title;
@@ -367,6 +384,12 @@ class BookingController extends Controller
     $mailBody = str_replace('{order_id}', $orderId, $mailBody);
     $mailBody = str_replace('{title}', '<a href="' . route('event.details', [$eventContent->slug, $eventContent->event_id]) . '">' . $eventTitle . '</a>', $mailBody);
     $mailBody = str_replace('{website_title}', $websiteTitle, $mailBody);
+    if($event->event_type == 'online'){
+      $mailBody = str_replace('{meeting_url}', $event->meeting_url, $mailBody);
+    }else{
+      $mailBody = str_replace('{meeting_url}', '', $mailBody);
+    }
+    
 
     // initialize a new mail
     $mail = new PHPMailer(true);
@@ -393,6 +416,7 @@ class BookingController extends Controller
       // Recipients
       $mail->setFrom($info->from_mail, $info->from_name);
       $mail->addAddress($bookingInfo->email);
+      // dd($bookingInfo->email);
 
       // Attachments (Invoice)
       $mail->addAttachment(public_path('assets/admin/file/invoices/') . $bookingInfo->invoice);
@@ -421,12 +445,24 @@ class BookingController extends Controller
 
       //generate qr code
       @mkdir(public_path('assets/admin/qrcodes/'), 0775, true);
-      QrCode::size(200)->generate($bookingInfo->booking_id, public_path('assets/admin/qrcodes/') . $bookingInfo->booking_id . '.svg');
+      if ($bookingInfo->variation != null) {
+        //generate qr code for without wise ticket
+        $variations = json_decode($bookingInfo->variation, true);
+        foreach ($variations as $variation) {
+          QrCode::size(200)->generate($bookingInfo->booking_id . '__' . $variation['unique_id'], public_path('assets/admin/qrcodes/') . $bookingInfo->booking_id . '__' . $variation['unique_id'] . '.svg');
+        }
+      } else {
+        //generate qr code for without wise ticket
+        for ($i = 1; $i <= $bookingInfo->quantity; $i++) {
+          QrCode::size(200)->generate($bookingInfo->booking_id . '__' . $i, public_path('assets/admin/qrcodes/') . $bookingInfo->booking_id . '__' . $i . '.svg');
+        }
+      }
 
       //generate qr code end
 
       // get course title
-      $language = $this->getLanguage();
+      $language =  Language::where('is_default', 1)->first();
+      $event = Event::find($bookingInfo->event_id);
 
       $eventInfo = EventContent::where('event_id', $bookingInfo->event_id)->where('language_id', $language->id)->first();
 
@@ -435,10 +471,12 @@ class BookingController extends Controller
       $mb = "35px";
       $ml = "18px";
 
-      PDF::loadView('frontend.event.invoice', compact('bookingInfo', 'eventInfo', 'width', 'float', 'mb', 'ml'))->save($fileLocated);
+      PDF::loadView('frontend.event.invoice', compact('bookingInfo', 'event', 'eventInfo', 'width', 'float', 'mb', 'ml', 'language'))->save($fileLocated);
 
       return $fileName;
-    } catch (\Exception $th) {
+    } catch (\Exception $e) {
+      Session::flash('error', $e->getMessage());
+      return;
     }
   }
 }

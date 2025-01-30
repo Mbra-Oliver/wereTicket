@@ -145,7 +145,10 @@
                                 ->where('event_id', $booking->event_id)
                                 ->first();
                             if (is_null($eventInfo)) {
-                                $eventInfo = \App\Models\Event\EventContent::where('event_id', $booking->event_id)->first();
+                                $eventInfo = \App\Models\Event\EventContent::where(
+                                    'event_id',
+                                    $booking->event_id,
+                                )->first();
                             }
                             $title = $eventInfo ? $eventInfo->title : '';
                             $slug = $eventInfo ? $eventInfo->slug : '';
@@ -246,10 +249,17 @@
                             @endif
                           </td>
                           <td>
-                            @if ($booking->scan_status == 1)
+                            @php
+                              if (!is_null($booking->scanned_tickets)) {
+                                  $totalScanedTickets = json_decode($booking->scanned_tickets, true);
+                              } else {
+                                  $totalScanedTickets = [];
+                              }
+                            @endphp
+                            @if (count($totalScanedTickets) == $booking->quantity)
                               <span class="badge badge-success">{{ __('Already Scanned') }}</span>
                             @else
-                              <span class="badge badge-danger">{{ __('Not Scanned') }}</span>
+                              {{ count($totalScanedTickets) . '/' . $booking->quantity }}
                             @endif
                           </td>
                           <td>

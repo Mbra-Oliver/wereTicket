@@ -19,7 +19,9 @@ use App\Models\OrganizerInfo;
 use App\Models\Transaction;
 use App\Rules\MatchOldPasswordRule;
 use DateTime;
+use Illuminate\Log\Logger;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Session;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -632,32 +634,52 @@ class OrganizerController extends Controller
   //pwa
   public function pwa()
   {
-    return view('organizer.pwa.index');
+    if (Auth::guard('organizer')->check()) {
+      return view('organizer.pwa.index');
+    } else {
+      return redirect()->route('organizer.login');
+    }
   }
   //check_qrcode
   public function check_qrcode(Request $request)
   {
-    $booking_id = $request->booking_id;
-    $check = Booking::where('booking_id', $booking_id)->first();
+    $ids = explode('__', $request->booking_id);
+    $booking_id = $ids[0];
+    $unique_id = $ids[1];
+    $organizer_id = Auth::guard('organizer')->user()->id;
+    $check = Booking::where([['booking_id', $booking_id]])->first();
     if ($check) {
-      if ($check->scan_status == 1) {
-        return response()->json(['alert_type' => 'error', 'message' => 'Already Scanned', 'booking_id' => $check->booking_id]);
-      } else {
-        if ($check->paymentStatus == 'completed') {
-          $check->update([
-            'scan_status' => 1
-          ]);
-          return response()->json(['alert_type' => 'success', 'message' => 'Verified', 'booking_id' => $check->booking_id]);
-        } elseif ($check->paymentStatus == 'free') {
-          $check->update([
-            'scan_status' => 1
-          ]);
-          return response()->json(['alert_type' => 'success', 'message' => 'Verified', 'booking_id' => $check->booking_id]);
+      if ($check->organizer_id == $organizer_id) {
+        // check payment status completed or not 
+        if ($check->paymentStatus == 'completed' || $check->paymentStatus == 'free') {
+          //check scanned_tickets column empty or not
+          if (is_null($check->scanned_tickets)) {
+            $scannedTicketArr = [
+              $unique_id
+            ];
+            $check->scanned_tickets = json_encode($scannedTicketArr);
+            $check->save();
+            return response()->json(['alert_type' => 'success', 'message' => 'Verified', 'booking_id' => $request->booking_id]);
+          } else {
+            //ticket random id will be insert
+            $scannedTicketArr = json_decode($check->scanned_tickets, true);
+            if (!in_array($unique_id, $scannedTicketArr)) {
+              array_push($scannedTicketArr, $unique_id);
+              $check->scanned_tickets = json_encode($scannedTicketArr);
+              $check->save();
+              return response()->json(['alert_type' => 'success', 'message' => 'Verified', 'booking_id' => $request->booking_id]);
+            } else {
+
+              return response()->json(['alert_type' => 'error', 'message' => 'Already Scanned', 'booking_id' => $request->booking_id]);
+            }
+          }
         } elseif ($check->paymentStatus == 'pending') {
-          return response()->json(['alert_type' => 'error', 'message' => 'Payment incomplete', 'booking_id' => $check->booking_id]);
+          return response()->json(['alert_type' => 'error', 'message' => 'Payment incomplete', 'booking_id' => $request->booking_id]);
         } elseif ($check->paymentStatus == 'rejected') {
-          return response()->json(['alert_type' => 'error', 'message' => 'Payment Rejected', 'booking_id' => $check->booking_id]);
+          return response()->json(['alert_type' => 'error', 'message' => 'Payment Rejected', 'booking_id' => $request->booking_id]);
         }
+      } else {
+        return response()->json(['alert_type' => 'error', 'message' => 'you do not have permission']);
       }
     } else {
       return response()->json(['alert_type' => 'error', 'message' => 'Unverified']);
@@ -666,7 +688,9 @@ class OrganizerController extends Controller
 
   public function changeTheme(Request $request)
   {
-    Session::put('organizer_theme_version', $request->organizer_theme_version);
+    $organizerInfo = Organizer::where('id', Auth::guard('organizer')->user()->id)->first();
+    $organizerInfo->theme_version = $request->theme_version;
+    $organizerInfo->save();
     return redirect()->back();
   }
 

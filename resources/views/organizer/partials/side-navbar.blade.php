@@ -1,5 +1,5 @@
 <div class="sidebar sidebar-style-2"
-  data-background-color="{{ Session::get('organizer_theme_version') == 'light' ? 'white' : 'dark2' }}">
+  data-background-color="{{ Auth::guard('organizer')->user()->theme_version == 'light' ? 'white' : 'dark2' }}">
   <div class="sidebar-wrapper scrollbar scrollbar-inner">
     <div class="sidebar-content">
       <div class="user">
@@ -50,6 +50,7 @@
           class="nav-item 
           @if (request()->routeIs('organizer.event_management.event')) active 
           @elseif (request()->routeIs('choose-event-type')) active 
+          @elseif (request()->routeIs('organizer.event_management.ticket_setting')) active 
           @elseif (request()->routeIs('organizer.add.event.event')) active 
           @elseif (request()->routeIs('organizer.event_management.edit_event')) active 
           @elseif (request()->routeIs('organizer.event.ticket')) active
@@ -65,6 +66,7 @@
             class="collapse
             @if (request()->routeIs('organizer.event_management.event')) show
             @elseif (request()->routeIs('choose-event-type')) show 
+            @elseif (request()->routeIs('organizer.event_management.ticket_setting')) show 
             @elseif (request()->routeIs('organizer.add.event.event')) show 
             @elseif (request()->routeIs('organizer.event_management.edit_event')) show 
             @elseif (request()->routeIs('organizer.event.ticket')) show
@@ -87,6 +89,7 @@
               <li
                 class="@if (request()->routeIs('organizer.event_management.event') && request()->input('event_type') == '') active
                   @elseif (request()->routeIs('organizer.event_management.edit_event') && request()->input('event_type') == '') active 
+                  @elseif (request()->routeIs('organizer.event_management.ticket_setting')) active 
                   @elseif (request()->routeIs('organizer.event.ticket') && request()->input('event_type') == '') active
               @elseif (request()->routeIs('organizer.event.add.ticket') && request()->input('event_type') == '') active
               @elseif (request()->routeIs('organizer.event.edit.ticket') && request()->input('event_type') == '') active @endif">

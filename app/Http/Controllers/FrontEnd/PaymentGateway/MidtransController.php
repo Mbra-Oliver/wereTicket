@@ -118,7 +118,7 @@ class MidtransController extends Controller
         return view('payments.event_midtrans', compact('snapToken', 'is_production'));
     }
 
-    public function ccNotify($orderId = null)
+    public function ccNotify($orderId)
     {
         // get the information from session
         $event_id = Session::get('event_id');

@@ -23,6 +23,7 @@ class Organizer extends Model implements AuthenticatableContract
     'twitter',
     'linkedin',
     'email_verified_at',
+    'theme_version'
   ];
 
   //withdraw

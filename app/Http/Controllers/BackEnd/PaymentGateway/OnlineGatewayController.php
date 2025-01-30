@@ -4,6 +4,7 @@ namespace App\Http\Controllers\BackEnd\PaymentGateway;
 
 use App\Http\Controllers\Controller;
 use App\Models\PaymentGateway\OnlineGateway;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Session;
@@ -13,26 +14,35 @@ class OnlineGatewayController extends Controller
 {
   public function index()
   {
-    $gatewayInfo['paypal'] = OnlineGateway::where('keyword', 'paypal')->first();
-    $gatewayInfo['instamojo'] = OnlineGateway::where('keyword', 'instamojo')->first();
-    $gatewayInfo['paystack'] = OnlineGateway::where('keyword', 'paystack')->first();
-    $gatewayInfo['flutterwave'] = OnlineGateway::where('keyword', 'flutterwave')->first();
-    $gatewayInfo['razorpay'] = OnlineGateway::where('keyword', 'razorpay')->first();
-    $gatewayInfo['mercadopago'] = OnlineGateway::where('keyword', 'mercadopago')->first();
-    $gatewayInfo['mollie'] = OnlineGateway::where('keyword', 'mollie')->first();
-    $gatewayInfo['stripe'] = OnlineGateway::where('keyword', 'stripe')->first();
-    $gatewayInfo['paytm'] = OnlineGateway::where('keyword', 'paytm')->first();
-    $gatewayInfo['midtrans'] = OnlineGateway::where('keyword', 'midtrans')->first();
-    $gatewayInfo['iyzico'] = OnlineGateway::where('keyword', 'iyzico')->first();
-    $gatewayInfo['paytabs'] = OnlineGateway::where('keyword', 'paytabs')->first();
-    $gatewayInfo['toyyibpay'] = OnlineGateway::where('keyword', 'toyyibpay')->first();
-    $gatewayInfo['phonepe'] = OnlineGateway::where('keyword', 'phonepe')->first();
-    $gatewayInfo['yoco'] = OnlineGateway::where('keyword', 'yoco')->first();
-    $gatewayInfo['xendit'] = OnlineGateway::where('keyword', 'xendit')->first();
-    $gatewayInfo['myfatoorah'] = OnlineGateway::where('keyword', 'myfatoorah')->first();
-    $gatewayInfo['perfect_money'] = OnlineGateway::where('keyword', 'perfect_money')->first();
+    try {
+      $gatewayInfo['paypal'] = OnlineGateway::where('keyword', 'paypal')->first();
+      $gatewayInfo['instamojo'] = OnlineGateway::where('keyword', 'instamojo')->first();
+      $gatewayInfo['paystack'] = OnlineGateway::where('keyword', 'paystack')->first();
+      $gatewayInfo['flutterwave'] = OnlineGateway::where('keyword', 'flutterwave')->first();
+      $gatewayInfo['razorpay'] = OnlineGateway::where('keyword', 'razorpay')->first();
+      $gatewayInfo['mercadopago'] = OnlineGateway::where('keyword', 'mercadopago')->first();
+      $gatewayInfo['mollie'] = OnlineGateway::where('keyword', 'mollie')->first();
+      $gatewayInfo['stripe'] = OnlineGateway::where('keyword', 'stripe')->first();
+      $gatewayInfo['paytm'] = OnlineGateway::where('keyword', 'paytm')->first();
+      $gatewayInfo['midtrans'] = OnlineGateway::where('keyword', 'midtrans')->first();
+      $gatewayInfo['iyzico'] = OnlineGateway::where('keyword', 'iyzico')->first();
+      $gatewayInfo['paytabs'] = OnlineGateway::where('keyword', 'paytabs')->first();
+      $gatewayInfo['toyyibpay'] = OnlineGateway::where('keyword', 'toyyibpay')->first();
+      $gatewayInfo['phonepe'] = OnlineGateway::where('keyword', 'phonepe')->first();
+      $gatewayInfo['yoco'] = OnlineGateway::where('keyword', 'yoco')->first();
+      $gatewayInfo['xendit'] = OnlineGateway::where('keyword', 'xendit')->first();
+      $gatewayInfo['myfatoorah'] = OnlineGateway::where('keyword', 'myfatoorah')->first();
+      $gatewayInfo['perfect_money'] = OnlineGateway::where('keyword', 'perfect_money')->first();
 
-    return view('backend.payment-gateways.online-gateways', $gatewayInfo);
+      $gatewayInfo['cinetpay'] = OnlineGateway::where('keyword', 'cinetpay')->first();
+
+
+
+
+      return view('backend.payment-gateways.online-gateways', $gatewayInfo);
+    } catch (Exception $e) {
+      dd($e);
+    }
   }
 
   public function updatePayPalInfo(Request $request)
@@ -64,6 +74,43 @@ class OnlineGatewayController extends Controller
     Session::flash('success', 'Updated Paypal Informaion Successfully');
 
     return redirect()->back();
+  }
+
+  public function
+  updateCinetPayInfo(Request $request)
+  {
+    try {
+      $rules = [
+        'cinetpay_status' => 'required',
+        'cinetpay_api_key' => 'required',
+        'cinetpay_site_id' => 'required',
+        'cinetpay_secret_key' => 'required'
+      ];
+
+
+      $validator = Validator::make($request->all(), $rules);
+
+      if ($validator->fails()) {
+        return redirect()->back()->withErrors($validator->errors());
+      }
+
+      $information['site_id'] = $request->cinetpay_site_id;
+      $information['api_key'] = $request->cinetpay_api_key;
+      $information['secret_key'] = $request->cinetpay_secret_key;
+
+      $paypalInfo = OnlineGateway::where('keyword', 'cinetpay')->first();
+
+      $paypalInfo->update([
+        'information' => json_encode($information),
+        'status' => $request->cinetpay_status
+      ]);
+
+      Session::flash('success', 'Updated Cinetpay Informaion Successfully');
+
+      return redirect()->back();
+    } catch (Exception $e) {
+      dd($e);
+    }
   }
 
   public function updateInstamojoInfo(Request $request)

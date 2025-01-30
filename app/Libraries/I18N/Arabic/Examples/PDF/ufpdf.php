@@ -308,17 +308,17 @@ function utf8_to_utf16be(&$txt, $bom = true) {
         while (ord($txt{$i + 1}) >= 0x80 && ord($txt{$i + 1}) < 0xC0) { ++$i; }
         continue;
       }
-
+      
       $q = array($c);
       // Fetch rest of sequence
       while (ord($txt{$i + 1}) >= 0x80 && ord($txt{$i + 1}) < 0xC0) { ++$i; $q[] = ord($txt{$i}); }
-
+      
       // Check length
       if (count($q) != $s) {
         $out .= "\xFF\xFD";        
         continue;
       }
-
+      
       switch ($s) {
         case 2:
           $cp = (($q[0] ^ 0xC0) << 6) | ($q[1] ^ 0x80);
@@ -363,7 +363,7 @@ function utf8_to_utf16be(&$txt, $bom = true) {
             $cp -= 0x10000;
             $s1 = 0xD800 | ($cp >> 10);
             $s2 = 0xDC00 | ($cp & 0x3FF);
-
+            
             $out .= chr($s1 >> 8);
             $out .= chr($s1 & 0xFF);
             $out .= chr($s2 >> 8);
@@ -409,17 +409,17 @@ function utf8_to_codepoints(&$txt) {
         while (ord($txt{$i + 1}) >= 0x80 && ord($txt{$i + 1}) < 0xC0) { ++$i; }
         continue;
       }
-
+      
       $q = array($c);
       // Fetch rest of sequence
       while (ord($txt{$i + 1}) >= 0x80 && ord($txt{$i + 1}) < 0xC0) { ++$i; $q[] = ord($txt{$i}); }
-
+      
       // Check length
       if (count($q) != $s) {
         $out[] = 0xFFFD;
         continue;
       }
-
+      
       switch ($s) {
         case 2:
           $cp = (($q[0] ^ 0xC0) << 6) | ($q[1] ^ 0x80);

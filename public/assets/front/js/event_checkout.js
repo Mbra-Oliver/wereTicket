@@ -17,8 +17,10 @@ $('select[name="gateway"]').on('change', function () {
     // show or hide stripe card inputs
     if (value == 'stripe') {
       $('#stripe-element').removeClass('d-none');
-    }else if(value == 'iyzico'){
+      $('.iyzico-element').addClass('d-none');
+    } else if (value == 'iyzico') {
       $('.iyzico-element').removeClass('d-none');
+      $('#stripe-element').addClass('d-none');
     } else {
       $('#stripe-element').addClass('d-none');
       $('.iyzico-element').addClass('d-none');

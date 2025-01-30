@@ -214,6 +214,11 @@
                                   {{ __('Edit') }}
                                 </a>
 
+                                <a href="{{ route('admin.event_management.ticket_setting', ['id' => $event->id]) }}"
+                                  class="dropdown-item">
+                                  {{ __('Ticket Settings') }}
+                                </a>
+
                                 <form class="deleteForm d-block"
                                   action="{{ route('admin.event_management.delete_event', ['id' => $event->id]) }}"
                                   method="post">

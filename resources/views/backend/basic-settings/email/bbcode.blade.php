@@ -77,6 +77,13 @@
           <td>{{ __('Transaction Id') }}</td>
         </tr>
       @endif
+      @if (
+          $templateInfo->mail_type == 'event_booking' )
+        <tr>
+          <td>{meeting_url}</td>
+          <td>{{ __('Meeting Link') }}</td>
+        </tr>
+      @endif
 
       @if ($templateInfo->mail_type == 'withdraw_approve')
         <tr>

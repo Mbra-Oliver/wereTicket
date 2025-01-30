@@ -459,6 +459,16 @@
                           for="free_ticket">{{ __('Tickets are Free') }}</label>
                       </div>
                     </div>
+                    <div class="col-lg-8">
+                      <div class="">
+                        <div class="form-group">
+                          <label for="">{{ __('Meeting Url') }}
+                            *</label>
+                          <input type="text" name="meeting_url" value="{{ $event->meeting_url }}"
+                            placeholder="Enter Price" class="form-control">
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
 

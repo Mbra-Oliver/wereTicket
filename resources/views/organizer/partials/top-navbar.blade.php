@@ -1,7 +1,7 @@
 <div class="main-header">
   <!-- Logo Header Start -->
   <div class="logo-header"
-    data-background-color="{{ Session::get('organizer_theme_version') == 'light' ? 'white' : 'dark2' }}">
+    data-background-color="{{ Auth::guard('organizer')->user()->theme_version == 'light' ? 'white' : 'dark2' }}">
     @if (!empty($websiteInfo->logo))
       <a href="{{ route('index') }}" class="logo" target="_blank">
         <img src="{{ asset('assets/admin/img/' . $websiteInfo->logo) }}" alt="logo" class="navbar-brand" width="120">
@@ -26,7 +26,7 @@
 
   <!-- Navbar Header Start -->
   <nav class="navbar navbar-header navbar-expand-lg"
-    data-background-color="{{ Session::get('organizer_theme_version') == 'light' ? 'white' : 'dark' }}">
+    data-background-color="{{ Auth::guard('organizer')->user()->theme_version == 'light' ? 'white' : 'dark' }}">
     <div class="container-fluid">
       <ul class="navbar-nav topbar-nav ml-md-auto align-items-center">
         <form action="{{ route('organizer.change_theme') }}" class="form-inline mr-3" method="POST">
@@ -35,15 +35,15 @@
           <div class="form-group">
             <div class="selectgroup selectgroup-secondary selectgroup-pills">
               <label class="selectgroup-item">
-                <input type="radio" name="organizer_theme_version" value="light" class="selectgroup-input"
-                  {{ Session::get('organizer_theme_version') == 'light' ? 'checked' : '' }}
+                <input type="radio" name="theme_version" value="light" class="selectgroup-input"
+                  {{ Auth::guard('organizer')->user()->theme_version == 'light' ? 'checked' : '' }}
                   onchange="this.form.submit()">
                 <span class="selectgroup-button selectgroup-button-icon"><i class="fa fa-sun"></i></span>
               </label>
 
               <label class="selectgroup-item">
-                <input type="radio" name="organizer_theme_version" value="dark" class="selectgroup-input"
-                  {{ Session::get('organizer_theme_version') == 'dark' ? 'checked' : '' }}
+                <input type="radio" name="theme_version" value="dark" class="selectgroup-input"
+                  {{ Auth::guard('organizer')->user()->theme_version == 'dark' ? 'checked' : '' }}
                   onchange="this.form.submit()">
                 <span class="selectgroup-button selectgroup-button-icon"><i class="fa fa-moon"></i></span>
               </label>

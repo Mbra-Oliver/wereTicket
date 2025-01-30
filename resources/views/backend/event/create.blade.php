@@ -313,7 +313,7 @@
                       </div>
                     </div>
 
-                    <div class="col-lg-6">
+                    <div class="col-lg-4">
                       <div class="">
                         <div class="form-group">
                           <label for="">{{ __('Price') }} ({{ $getCurrencyInfo->base_currency_text }}) *
@@ -325,6 +325,16 @@
                       <div class="form-group">
                         <input type="checkbox" name="pricing_type" value="free" class="" id="free_ticket">
                         <label for="free_ticket">{{ __('Tickets are Free') }}</label>
+                      </div>
+                    </div>
+                    <div class="col-lg-8">
+                      <div class="">
+                        <div class="form-group">
+                          <label for="">{{ __('Meeting Url') }} *
+                          </label>
+                          <input type="text" name="meeting_url" class="form-control"
+                            placeholder="Enter Meeting Url">
+                        </div>
                       </div>
                     </div>
                   </div>

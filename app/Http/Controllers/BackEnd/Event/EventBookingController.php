@@ -11,15 +11,16 @@ use App\Models\Event;
 use App\Models\Event\Booking;
 use App\Models\Event\EventContent;
 use App\Models\Event\Ticket;
+use App\Models\Language;
 use App\Models\PaymentGateway\OfflineGateway;
 use App\Models\PaymentGateway\OnlineGateway;
 use App\Models\Transaction;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Maatwebsite\Excel\Facades\Excel;
-use PDF;
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -198,32 +199,55 @@ class EventBookingController extends Controller
     return redirect()->back();
   }
 
+
+
   public function generateInvoice($bookingInfo)
   {
-    $fileName = $bookingInfo->booking_id . '.pdf';
-    $directory = public_path('assets/admin/file/invoices/');
+    try {
+      $fileName = $bookingInfo->booking_id . '.pdf';
+      $directory = public_path('assets/admin/file/invoices/');
 
-    @mkdir($directory, 0775, true);
-    @mkdir(public_path('assets/admin/qrcodes/'), 0775, true);
+      @mkdir($directory, 0775, true);
 
-    $fileLocated = $directory . $fileName;
+      $fileLocated = $directory . $fileName;
 
-    //generate qr code
-    QrCode::size(200)->generate($bookingInfo->booking_id, public_path('assets/admin/qrcodes/') . $bookingInfo->booking_id . '.svg');
+      //generate qr code
+      @mkdir(public_path('assets/admin/qrcodes/'), 0775, true);
+      if ($bookingInfo->variation != null) {
+        //generate qr code for without wise ticket
+        $variations = json_decode($bookingInfo->variation, true);
+        foreach ($variations as $variation) {
+          QrCode::size(200)->generate($bookingInfo->booking_id . '__' . $variation['unique_id'], public_path('assets/admin/qrcodes/') . $bookingInfo->booking_id . '__' . $variation['unique_id'] . '.svg');
+        }
+      } else {
+        //generate qr code for without wise ticket
+        for ($i = 1; $i <= $bookingInfo->quantity; $i++) {
+          QrCode::size(200)->generate($bookingInfo->booking_id . '__' . $i, public_path('assets/admin/qrcodes/') . $bookingInfo->booking_id . '__' . $i . '.svg');
+        }
+      }
 
-    // get event title
-    $language = $this->getLanguage();
+      //generate qr code end
 
-    $eventInfo = EventContent::where('event_id', $bookingInfo->event_id)->where('language_id', $language->id)->first();
+      // get event title
+      $language =  Language::where('is_default', 1)->first();
+      $event = Event::find($bookingInfo->event_id);
 
-    $width = "50%";
-    $float = "right";
-    $mb = "35px";
-    $ml = "18px";
+      $eventInfo = EventContent::where('event_id', $bookingInfo->event_id)->where('language_id', $language->id)->first();
 
-    PDF::loadView('frontend.event.invoice', compact('bookingInfo', 'eventInfo', 'width', 'float', 'mb', 'ml'))->save($fileLocated);
 
-    return $fileName;
+
+      $width = "50%";
+      $float = "right";
+      $mb = "35px";
+      $ml = "18px";
+
+      PDF::loadView('frontend.event.invoice', compact('bookingInfo', 'event', 'eventInfo', 'width', 'float', 'mb', 'ml', 'language'))->save($fileLocated);
+
+      return $fileName;
+    } catch (\Exception $e) {
+      Session::flash('error', $e->getMessage());
+      return;
+    }
   }
 
   public function sendMail($request, $booking, $mailFor)
