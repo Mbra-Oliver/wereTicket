@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\FrontEnd\Event;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\FrontEnd\PaymentGateway\CinetPayController;
 use App\Http\Controllers\FrontEnd\PaymentGateway\FlutterwaveController;
 use App\Http\Controllers\FrontEnd\PaymentGateway\InstamojoController;
 use App\Http\Controllers\FrontEnd\PaymentGateway\IyzipayController;
@@ -44,6 +45,8 @@ class BookingController extends Controller
   public function index(Request $request, $id)
   {
     $basic = Basic::select('event_guest_checkout_status')->first();
+
+
     if ($basic->event_guest_checkout_status == 0 && $request->type != 'guest') {
       // check whether user is logged in or not
       if (Auth::guard('customer')->check() == false) {
@@ -53,8 +56,11 @@ class BookingController extends Controller
 
     // payment
     if ($request->total != 0 || Session::get('sub_total') != 0) {
+
+
       if (!$request->exists('gateway')) {
         Session::flash('error', 'Please select a payment method.');
+
 
         return redirect()->back();
       } else if ($request['gateway'] == 'paypal') {
@@ -126,6 +132,10 @@ class BookingController extends Controller
         $xindit = new MyFatoorahController();
 
         return $xindit->makePayment($request, $id);
+      } else if ($request['gateway'] == 'cinetpay') {
+        $cinetpay = new CinetPayController();
+
+        return $cinetpay->makePayment($request, $id);
       } else if ($request['gateway'] == 'perfect_money') {
         $perfect_money = new PerfectMoneyController();
 
@@ -384,12 +394,12 @@ class BookingController extends Controller
     $mailBody = str_replace('{order_id}', $orderId, $mailBody);
     $mailBody = str_replace('{title}', '<a href="' . route('event.details', [$eventContent->slug, $eventContent->event_id]) . '">' . $eventTitle . '</a>', $mailBody);
     $mailBody = str_replace('{website_title}', $websiteTitle, $mailBody);
-    if($event->event_type == 'online'){
+    if ($event->event_type == 'online') {
       $mailBody = str_replace('{meeting_url}', $event->meeting_url, $mailBody);
-    }else{
+    } else {
       $mailBody = str_replace('{meeting_url}', '', $mailBody);
     }
-    
+
 
     // initialize a new mail
     $mail = new PHPMailer(true);

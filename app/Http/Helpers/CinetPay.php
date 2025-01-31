@@ -24,7 +24,7 @@
  */
 
 
-namespace App\Helpers;
+namespace App\Http\Helpers;
 
 use Exception;
 
@@ -123,7 +123,11 @@ class CinetPay
         //soumission des donnees
         $data = $this->getData();
 
+
+
         $flux_json = $this->callCinetpayWsMethod($data, $this->BASE_URL);
+
+
         if ($flux_json == false)
             throw new Exception("Un probleme est survenu lors de l'appel du WS !");
 
