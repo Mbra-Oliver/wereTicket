@@ -103,15 +103,13 @@ class CinetPayController extends Controller
             $val['PAYMENT_AMOUNT'] = $payable_amount;
             $val['PAYMENT_UNITS'] = "$currencyInfo->base_currency_text";
 
-            $val['STATUS_URL'] = route('event_booking.perfect-money.notify');
-            $val['PAYMENT_URL'] = route('event_booking.perfect-money.notify');
+            $val['STATUS_URL'] = route('event_booking.cinetpay.notify');
+            $val['PAYMENT_URL'] = route('event_booking.cinetpay.notify');
             $val['PAYMENT_URL_METHOD'] = 'GET';
-            $val['NOPAYMENT_URL'] = route('event_booking.perfect-money.cancel');
+            $val['NOPAYMENT_URL'] = route('event_booking.cinetpay.cancel');
             $val['NOPAYMENT_URL_METHOD'] = 'GET';
             $val['SUGGESTED_MEMO'] = "$request->fname " . " " . "$request->lname";
             $val['BAGGAGE_FIELDS'] = 'IDENT';
-
-
 
             //Obtenir les infos de l'evenement
 
@@ -181,70 +179,74 @@ class CinetPayController extends Controller
     }
     public function notify(Request $request)
     {
-        // get the information from session
-        $event_id = Session::get('event_id');
-        $arrData = Session::get('arrData');
-        $final_amount = $arrData['price'] + $arrData['tax'];
+        try {
+            // get the information from session
+            $event_id = Session::get('event_id');
+            $arrData = Session::get('arrData');
+            $final_amount = $arrData['price'] + $arrData['tax'];
 
-        $perfect_money = OnlineGateway::where('keyword', 'cinetpay')->first();
-        $perfectMoneyInfo = json_decode($perfect_money->information, true);
-        $currencyInfo = Basic::select('base_currency_text')->first();
+            $perfect_money = OnlineGateway::where('keyword', 'cinetpay')->first();
+            $perfectMoneyInfo = json_decode($perfect_money->information, true);
+            $currencyInfo = Basic::select('base_currency_text')->first();
 
-        $amo = $request['PAYMENT_AMOUNT'];
-        $unit = $request['PAYMENT_UNITS'];
-        $track = $request['PAYMENT_ID'];
-        $id = Session::get('payment_id');
-        if ($request->PAYEE_ACCOUNT == $perfectMoneyInfo['perfect_money_wallet_id'] && $unit == $currencyInfo->base_currency_text && $track == $id && $amo == round($final_amount, 2)) {
-            //success payment and save data into database
-            $booking = new BookingController();
+            $amo = $request['PAYMENT_AMOUNT'];
+            $unit = $request['PAYMENT_UNITS'];
+            $track = $request['PAYMENT_ID'];
+            $id = Session::get('payment_id');
+            if ($request->PAYEE_ACCOUNT == $perfectMoneyInfo['perfect_money_wallet_id'] && $unit == $currencyInfo->base_currency_text && $track == $id && $amo == round($final_amount, 2)) {
+                //success payment and save data into database
+                $booking = new BookingController();
 
-            // store the course enrolment information in database
-            $bookingInfo = $booking->storeData($arrData);
-            // generate an invoice in pdf format
-            $invoice = $booking->generateInvoice($bookingInfo, $event_id);
-            //unlink qr code
-            @unlink(public_path('assets/admin/qrcodes/') . $bookingInfo->booking_id . '.svg');
-            //end unlink qr code
+                // store the course enrolment information in database
+                $bookingInfo = $booking->storeData($arrData);
+                // generate an invoice in pdf format
+                $invoice = $booking->generateInvoice($bookingInfo, $event_id);
+                //unlink qr code
+                @unlink(public_path('assets/admin/qrcodes/') . $bookingInfo->booking_id . '.svg');
+                //end unlink qr code
 
-            // then, update the invoice field info in database
-            $bookingInfo->update(['invoice' => $invoice]);
+                // then, update the invoice field info in database
+                $bookingInfo->update(['invoice' => $invoice]);
 
-            //add blance to admin revinue
-            $earning = Earning::first();
-            $earning->total_revenue = $earning->total_revenue + $arrData['price'] + $bookingInfo->tax;
-            if ($bookingInfo['organizer_id'] != null) {
-                $earning->total_earning = $earning->total_earning + ($bookingInfo->tax + $bookingInfo->commission);
+                //add blance to admin revinue
+                $earning = Earning::first();
+                $earning->total_revenue = $earning->total_revenue + $arrData['price'] + $bookingInfo->tax;
+                if ($bookingInfo['organizer_id'] != null) {
+                    $earning->total_earning = $earning->total_earning + ($bookingInfo->tax + $bookingInfo->commission);
+                } else {
+                    $earning->total_earning = $earning->total_earning + $arrData['price'] + $bookingInfo->tax;
+                }
+                $earning->save();
+
+                //storeTransaction
+                $bookingInfo['paymentStatus'] = 1;
+                $bookingInfo['transcation_type'] = 1;
+
+                storeTranscation($bookingInfo);
+
+                //store amount to organizer
+                $organizerData['organizer_id'] = $bookingInfo['organizer_id'];
+                $organizerData['price'] = $arrData['price'];
+                $organizerData['tax'] = $bookingInfo->tax;
+                $organizerData['commission'] = $bookingInfo->commission;
+                storeOrganizer($organizerData);
+
+                // send a mail to the customer with the invoice
+                $booking->sendMail($bookingInfo);
+
+                // remove all session data
+                Session::forget('event_id');
+                Session::forget('selTickets');
+                Session::forget('arrData');
+                Session::forget('paymentId');
+                Session::forget('discount');
+                Session::forget('payment_id');
+                return redirect()->route('event_booking.complete', ['id' => $event_id, 'booking_id' => $bookingInfo->id]);
             } else {
-                $earning->total_earning = $earning->total_earning + $arrData['price'] + $bookingInfo->tax;
+                return redirect()->route('check-out')->with(['alert-type' => 'error', 'message' => 'Payment Failed']);
             }
-            $earning->save();
-
-            //storeTransaction
-            $bookingInfo['paymentStatus'] = 1;
-            $bookingInfo['transcation_type'] = 1;
-
-            storeTranscation($bookingInfo);
-
-            //store amount to organizer
-            $organizerData['organizer_id'] = $bookingInfo['organizer_id'];
-            $organizerData['price'] = $arrData['price'];
-            $organizerData['tax'] = $bookingInfo->tax;
-            $organizerData['commission'] = $bookingInfo->commission;
-            storeOrganizer($organizerData);
-
-            // send a mail to the customer with the invoice
-            $booking->sendMail($bookingInfo);
-
-            // remove all session data
-            Session::forget('event_id');
-            Session::forget('selTickets');
-            Session::forget('arrData');
-            Session::forget('paymentId');
-            Session::forget('discount');
-            Session::forget('payment_id');
-            return redirect()->route('event_booking.complete', ['id' => $event_id, 'booking_id' => $bookingInfo->id]);
-        } else {
-            return redirect()->route('check-out')->with(['alert-type' => 'error', 'message' => 'Payment Failed']);
+        } catch (\Exception $e) {
+            return redirect()->route('check-out')->with(['alert-type' => 'error', 'message' => 'Payment Failed: ' . $e->getMessage()]);
         }
     }
 

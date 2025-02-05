@@ -154,6 +154,13 @@ Route::prefix('event-booking')->group(function () {
   Route::get('/perfect-money/notify', 'FrontEnd\PaymentGateway\PerfectMoneyController@notify')->name('event_booking.perfect-money.notify');
 
   Route::get('/perfect-money/cancel', 'FrontEnd\PaymentGateway\PerfectMoneyController@cancel')->name('event_booking.perfect-money.cancel');
+
+
+
+  //cinetpay money
+  Route::get('/cinetpay/notify', 'FrontEnd\PaymentGateway\CinetPayController@notify')->name('event_booking.cinetpay.notify');
+
+  Route::get('/cinetpay/cancel', 'FrontEnd\PaymentGateway\CinetPayController@cancel')->name('event_booking.cinetpay.cancel');
 });
 /*
 |---------------------------------------------------------------------------------
