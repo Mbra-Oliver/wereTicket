@@ -2,125 +2,105 @@
 
 namespace App\Http\Controllers\FrontEnd\PaymentGateway;
 
-use App\Helpers\CinetPay;
+use App\Helpers\CinetPay as HelpersCinetPay;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FrontEnd\Event\BookingController;
-use App\Http\Helpers\CinetPay as HelpersCinetPay;
+use App\Http\Helpers\CinetPay;
 use App\Models\BasicSettings\Basic;
 use App\Models\Earning;
 use App\Models\Event;
 use App\Models\PaymentGateway\OnlineGateway;
+use App\Models\Booking;
+use App\Models\Event\Booking as EventBooking;
+use ErrorException;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 
 class CinetPayController extends Controller
 {
-    /*
-     * Perfect Money Gateway
-     */
     public static function makePayment(Request $request, $event_id)
     {
         try {
-            /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            ~~~~~~~~~~~~~~~~~ Booking Info ~~~~~~~~~~~~~~
-            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-            $currencyInfo = Basic::select('base_currency_text')->first();
+            // Validation des données
+            $request->validate([
+                'fname' => 'required|string',
+                'lname' => 'required|string',
+                'email' => 'required|email',
+                'phone' => 'required|string',
+                'country' => 'required|string',
+                'address' => 'required|string',
+                'gateway' => 'required|string',
+            ]);
 
-            $rules = [
-                'fname' => 'required',
-                'lname' => 'required',
-                'email' => 'required',
-                'phone' => 'required',
-                'country' => 'required',
-                'address' => 'required',
-                'gateway' => 'required',
-            ];
-
-            $message = [];
-
-            $message['fname.required'] = 'The first name feild is required';
-            $message['lname.required'] = 'The last name feild is required';
-            $message['gateway.required'] = 'The payment gateway feild is required';
-            $request->validate($rules, $message);
+            // Récupération des informations
+            $currencyInfo = Basic::first(['base_currency_text']);
+            $basicSetting = Basic::first(['commission']);
+            $product = Event::findOrFail($event_id);
 
             $total = Session::get('grand_total');
-            $quantity = Session::get('quantity');
-            $discount = Session::get('discount');
-
-            //tax and commission end
-            $basicSetting = Basic::select('commission')->first();
-
-            $tax_amount = Session::get('tax');
+            $tax_amount = Session::get('tax', 0);
             $commission_amount = ($total * $basicSetting->commission) / 100;
+            $payable_amount = round($total + $tax_amount, 2);
 
-            $total_early_bird_dicount = Session::get('total_early_bird_dicount');
-            // changing the currency before redirect to PayPal
-
-            $arrData = array(
+            // Préparation des données de réservation
+            $arrData = [
                 'event_id' => $event_id,
                 'price' => $total,
                 'tax' => $tax_amount,
                 'commission' => $commission_amount,
-                'quantity' => $quantity,
-                'discount' => $discount,
-                'total_early_bird_dicount' => $total_early_bird_dicount,
+                'quantity' => Session::get('quantity'),
+                'discount' => Session::get('discount'),
+                'total_early_bird_dicount' => Session::get('total_early_bird_dicount'),
                 'currencyText' => $currencyInfo->base_currency_text,
-                'currencyTextPosition' => $currencyInfo->base_currency_text_position,
-                'currencySymbol' => $currencyInfo->base_currency_symbol,
-                'currencySymbolPosition' => $currencyInfo->base_currency_symbol_position,
                 'fname' => $request->fname,
                 'lname' => $request->lname,
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'country' => $request->country,
-                'state' => $request->state,
-                'city' => $request->city,
-                'zip_code' => $request->zip_code,
                 'address' => $request->address,
                 'paymentMethod' => 'Cinetpay',
                 'gatewayType' => 'online',
-                'paymentStatus' => 'completed',
-            );
+                'paymentStatus' => '0',
+                'currencyTextPosition' => $currencyInfo->base_currency_text_position,
+                'currencySymbol' => $currencyInfo->base_currency_symbol,
+                'currencySymbolPosition' => $currencyInfo->base_currency_symbol_position,
+
+                'state' => $request->state,
+                'city' => $request->city,
+                'zip_code' => $request->city,
+            ];
+
+            // Configuration CinetPay
+            $cinetpay = OnlineGateway::where('keyword', 'cinetpay')->firstOrFail();
+            $info = json_decode($cinetpay->information, true);
+
+            $transactionId = uniqid(mt_rand(), true);
+
+            $bookingModel = new BookingController();
 
 
-            $payable_amount = round($total + $tax_amount, 2);
-            /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            ~~~~~~~~~~~~~~~~~ Booking End ~~~~~~~~~~~~~~
-            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-            /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            ~~~~~~ Payment Gateway Init Start ~~~~~~~~~~
-            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-            $randomNo = substr(uniqid(), 0, 8);
-            $websiteInfo = Basic::select('website_title')->first();
-            $cinetpay_money = OnlineGateway::where('keyword', 'cinetpay')->first();
-            $info = json_decode($cinetpay_money->information, true);
-            $val['SITE_ID'] = $info['site_id'];
-            $val['API_KEY'] = $info['api_key'];;
-            $val['PAYEE_NAME'] = $websiteInfo->website_title;
-            $val['PAYMENT_ID'] = "$randomNo"; //random id
-            $val['PAYMENT_AMOUNT'] = $payable_amount;
-            $val['PAYMENT_UNITS'] = "$currencyInfo->base_currency_text";
-
-            $val['STATUS_URL'] = route('event_booking.cinetpay.notify');
-            $val['PAYMENT_URL'] = route('event_booking.cinetpay.notify');
-            $val['PAYMENT_URL_METHOD'] = 'GET';
-            $val['NOPAYMENT_URL'] = route('event_booking.cinetpay.cancel');
-            $val['NOPAYMENT_URL_METHOD'] = 'GET';
-            $val['SUGGESTED_MEMO'] = "$request->fname " . " " . "$request->lname";
-            $val['BAGGAGE_FIELDS'] = 'IDENT';
-
-            //Obtenir les infos de l'evenement
-
-            $product = Event::find($event_id);
-
-            //Generer les donnees pour le paiement
 
 
-            $dataToSendToCinetPay = [
-                'transaction_id' => $randomNo,
-                'amount' => 100,
+            try {
+                // store the course enrolment information in database
+                $bookingInfo = $bookingModel->storeData($arrData);
+            } catch (Exception $error) {
+                throw new ErrorException($error->getMessage());
+            }
+
+            if (!$bookingInfo) {
+                throw new Exception("Échec de l'enregistrement de la réservation");
+            }
+
+            // $payable_amount doit être défini avant
+
+            $dataToSend = [
+                'transaction_id' => $bookingInfo->booking_id, // Utiliser -> car bookingInfo est un objet
+                'amount' => 100, // Corrigé pour utiliser la vraie variable
                 'currency' => 'XOF',
                 'customer_name' => $request->fname,
                 'customer_surname' => $request->lname,
@@ -133,125 +113,195 @@ class CinetPayController extends Controller
                 'invoice_data' => [
                     'id' => $event_id,
                     'name' => $product->event_type,
-                    'price' => $payable_amount
+                    'price' => $payable_amount,
                 ],
-                'description' => 'achat de ticket d\'évenement' . $product->name,
-                'notify_url' => $val['PAYMENT_URL'],
-                'return_url' => $val['PAYMENT_URL'],
-                'channels' => 'MOBILE_MONEY',
-                'metadata' => '',
-                'customer_zip_code' => '00225'
+                'description' => 'Achat de ticket pour l\'événement : ' . $product->name,
+                'notify_url' => route('event_booking.cinetpay.notify', $bookingInfo->booking_id),
+                'return_url' => route('event_booking.cinetpay.return', ['eventId' => $bookingInfo->booking_id]),
+                'callback_url' => route('event_booking.cinetpay.notify', $bookingInfo->booking_id),
+                'channels' => 'ALL',
+                'metadata' => json_encode([
+                    'event_id' => $event_id,
+                ]),
+                'customer_zip_code' => '00225',
             ];
 
-            $initCinetPay = new HelpersCinetPay($info['site_id'], $info['api_key']);
-            //Enregistrement de paiement
 
-            $request->session()->put('payment_id', $randomNo);
-            $request->session()->put('event_id', $event_id);
-            $request->session()->put('arrData', $arrData);
+            // Génération du lien de paiement
+            $cinetpayClient = new CinetPay($info['site_id'], $info['api_key']);
+            $result = $cinetpayClient->generatePaymentLink($dataToSend);
 
+            if (isset($result['code']) && $result['code'] == '201') {
+                // Stockage en session
+                Session::put('payment_id', $transactionId);
+                Session::put('arrData', $arrData);
+                Session::put('event_id', $event_id);
 
-            try {
-
-
-                $resultCinetPayInit = $initCinetPay->generatePaymentLink($dataToSendToCinetPay);
-
-                if ($resultCinetPayInit['code'] === "201") {
-                    //Afficher lien de paiement
-                    $PaymentLink = $resultCinetPayInit['data']['payment_url'];
-                    return redirect()->to($PaymentLink);
-                } else {
-                    //Afficher message d'erreur
-                    throw new \Exception('Payment initialization failed.');
-                }
-            } catch (\Exception $e) {
-                dd($e);
-                return redirect()->route('check-out')->with(['alert-type' => 'error', 'message' => 'Payment Failed: ' . $e->getMessage()]);
+                return redirect()->to($result['data']['payment_url']);
+            } else {
+                Log::error('Erreur Cinetpay init', ['response' => $result]);
+                return redirect()->route('check-out')->with('error', 'Échec de l\'initialisation du paiement.');
             }
-
-            /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            ~~~~~~ Payment Gateway Init End ~~~~~~~~~~
-            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             dd($e);
-            return redirect()->route('check-out')->with(['alert-type' => 'error', 'message' => 'Payment Failed: ' . $e->getMessage()]);
+            Log::error('Erreur dans makePayment', ['message' => $e->getMessage()]);
+            return redirect()->route('check-out')->with('error',  $e->getMessage() ?? 'Erreur lors de l\'initialisation du paiement.');
         }
     }
-    public function notify(Request $request)
+
+    public function notify($bookingId)
     {
+
         try {
-            // get the information from session
-            $event_id = Session::get('event_id');
+
+
+            if (!$bookingId) {
+                return response()->json(['message' => 'Transaction ID manquant.'], 400);
+            }
+
+            // On suppose que tu as enregistré les transactions ou que tu relies aux sessions
             $arrData = Session::get('arrData');
-            $final_amount = $arrData['price'] + $arrData['tax'];
+            if (!$arrData) {
+                Log::error('Données de session manquantes pour la transaction', ['transaction_id' => $bookingId]);
+                return redirect()->back()->with(['message' => 'Session expirée ou données manquantes.']);
+            }
 
-            $perfect_money = OnlineGateway::where('keyword', 'cinetpay')->first();
-            $perfectMoneyInfo = json_decode($perfect_money->information, true);
-            $currencyInfo = Basic::select('base_currency_text')->first();
+            $bookingController = new BookingController();
+            $bookingInfo = Booking::where('booking_id', $bookingId)->first();
 
-            $amo = $request['PAYMENT_AMOUNT'];
-            $unit = $request['PAYMENT_UNITS'];
-            $track = $request['PAYMENT_ID'];
-            $id = Session::get('payment_id');
-            if ($request->PAYEE_ACCOUNT == $perfectMoneyInfo['perfect_money_wallet_id'] && $unit == $currencyInfo->base_currency_text && $track == $id && $amo == round($final_amount, 2)) {
-                //success payment and save data into database
-                $booking = new BookingController();
+            // Vérifier le statut du paiement
+            $checkResult = $this->checkPaymentStatus($bookingId);
 
-                // store the course enrolment information in database
-                $bookingInfo = $booking->storeData($arrData);
-                // generate an invoice in pdf format
-                $invoice = $booking->generateInvoice($bookingInfo, $event_id);
-                //unlink qr code
-                @unlink(public_path('assets/admin/qrcodes/') . $bookingInfo->booking_id . '.svg');
-                //end unlink qr code
+            if ($checkResult['code'] === '00') {
 
-                // then, update the invoice field info in database
-                $bookingInfo->update(['invoice' => $invoice]);
+                $event_id = Session::get('event_id');
+                $invoice = $bookingController->generateInvoice($bookingInfo, $event_id);
+                $bookingInfo->update([
+                    'invoice' => $invoice,
+                    'paymentStatus' => 1
+                ]);
 
-                //add blance to admin revinue
                 $earning = Earning::first();
-                $earning->total_revenue = $earning->total_revenue + $arrData['price'] + $bookingInfo->tax;
-                if ($bookingInfo['organizer_id'] != null) {
-                    $earning->total_earning = $earning->total_earning + ($bookingInfo->tax + $bookingInfo->commission);
+                $earning->total_revenue += $arrData['price'] + $bookingInfo->tax;
+                if ($bookingInfo->organizer_id) {
+                    $earning->total_earning += ($bookingInfo->tax + $bookingInfo->commission);
                 } else {
-                    $earning->total_earning = $earning->total_earning + $arrData['price'] + $bookingInfo->tax;
+                    $earning->total_earning += $arrData['price'] + $bookingInfo->tax;
                 }
                 $earning->save();
 
-                //storeTransaction
                 $bookingInfo['paymentStatus'] = 1;
-                $bookingInfo['transcation_type'] = 1;
+                $bookingInfo['transaction_type'] = 1; // Correction ici !
 
                 storeTranscation($bookingInfo);
 
-                //store amount to organizer
-                $organizerData['organizer_id'] = $bookingInfo['organizer_id'];
-                $organizerData['price'] = $arrData['price'];
-                $organizerData['tax'] = $bookingInfo->tax;
-                $organizerData['commission'] = $bookingInfo->commission;
-                storeOrganizer($organizerData);
+                if ($bookingInfo->organizer_id) {
+                    storeOrganizer([
+                        'organizer_id' => $bookingInfo->organizer_id,
+                        'price' => $arrData['price'],
+                        'tax' => $bookingInfo->tax,
+                        'commission' => $bookingInfo->commission,
+                    ]);
+                }
 
-                // send a mail to the customer with the invoice
-                $booking->sendMail($bookingInfo);
+                $bookingController->sendMail($bookingInfo);
 
-                // remove all session data
-                Session::forget('event_id');
-                Session::forget('selTickets');
-                Session::forget('arrData');
-                Session::forget('paymentId');
-                Session::forget('discount');
-                Session::forget('payment_id');
-                return redirect()->route('event_booking.complete', ['id' => $event_id, 'booking_id' => $bookingInfo->id]);
+                // Nettoyage de la session
+                Session::forget([
+                    'event_id',
+                    'selTickets',
+                    'arrData',
+                    'payment_id',
+                    'discount',
+                    'total_early_bird_dicount',
+                    'grand_total',
+                    'quantity',
+                    'tax'
+                ]);
+
+                return view('frontend.customer.dashboard', $bookingInfo);
             } else {
-                return redirect()->route('check-out')->with(['alert-type' => 'error', 'message' => 'Payment Failed']);
+                Log::warning('Paiement échoué', ['transaction_id' => $bookingId]);
+                return response()->json(['message' => 'Paiement échoué.']);
             }
-        } catch (\Exception $e) {
-            return redirect()->route('check-out')->with(['alert-type' => 'error', 'message' => 'Payment Failed: ' . $e->getMessage()]);
+        } catch (Exception $e) {
+            dd($e);
+            Log::error('Erreur dans la notification CinetPay', ['message' => $e->getMessage()]);
+            return response()->json(['message' => 'Erreur serveur.'], 500);
         }
+    }
+
+
+    private function checkPaymentStatus($transactionId)
+    {
+        try {
+            // Configuration CinetPay
+            $cinetpay = OnlineGateway::where('keyword', 'cinetpay')->firstOrFail();
+            $info = json_decode($cinetpay->information, true);
+
+            $cinetpayUrl = 'https://api-checkout.cinetpay.com/v2/payment/check';
+
+            $client = new \GuzzleHttp\Client();
+
+            $response = $client->post($cinetpayUrl, [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => [
+                    'apikey' => $info['api_key'], // ← Ici la correction
+                    'site_id' => $info['site_id'],
+                    'transaction_id' => $transactionId,
+                ],
+                'timeout' => 30,
+            ]);
+
+
+
+            $body = json_decode((string) $response->getBody(), true);
+
+            if (isset($body['code']) && $body['code'] == '00') {
+                return [
+                    'status' => true,
+                    'code' => $body['code'],
+                    'message' => $body['message'] ?? 'Paiement confirmé',
+                ];
+            } else {
+                return [
+                    'status' => false,
+                    'code' => $body['code'] ?? 'unknown',
+                    'message' => $body['message'] ?? 'Échec de la transaction',
+                ];
+            }
+        } catch (Exception $e) {
+            dd($e);
+            Log::error('Erreur lors de la vérification du paiement CinetPay', [
+                'transaction_id' => $transactionId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'status' => false,
+                'code' => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+
+
+
+    public function return()
+    {
+        return redirect()->route('success.page')->with('success', 'Votre paiement a été traité avec succès.');
+    }
+
+    public function callback()
+    {
+        return response()->json(['message' => 'Callback reçu.']);
     }
 
     public function cancel()
     {
-        return redirect()->route('check-out')->with(['alert-type' => 'error', 'message' => 'Payment Canceled']);
+        return redirect()->route('check-out')->with('error', 'Paiement annulé.');
     }
 }

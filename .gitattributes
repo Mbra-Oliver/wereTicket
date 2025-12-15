@@ -1,5 +1,111 @@
+# ========================
+# Git Attributes pour Laravel
+# ========================
+
+# Auto detect text files and perform LF normalization
 * text=auto
-*.css linguist-vendored
-*.scss linguist-vendored
-*.js linguist-vendored
+
+# PHP
+*.php text eol=lf diff=php
+*.blade.php text eol=lf
+
+# Configuration
+*.json text eol=lf
+*.xml text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.env text eol=lf
+.env.* text eol=lf
+
+# Documentation
+*.md text eol=lf
+*.txt text eol=lf
+LICENSE text eol=lf
+README text eol=lf
+
+# Scripts
+*.sh text eol=lf
+*.bash text eol=lf
+Makefile text eol=lf
+docker-entrypoint.sh text eol=lf
+
+# Web
+*.html text eol=lf diff=html
+*.css text eol=lf diff=css linguist-vendored
+*.scss text eol=lf linguist-vendored
+*.sass text eol=lf
+*.less text eol=lf
+*.js text eol=lf linguist-vendored
+*.ts text eol=lf
+*.jsx text eol=lf
+*.tsx text eol=lf
+*.vue text eol=lf
+
+# SQL
+*.sql text eol=lf
+
+# Docker
+Dockerfile text eol=lf
+docker-compose*.yml text eol=lf
+.dockerignore text eol=lf
+
+# Git
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# Images
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.svg text eol=lf
+*.webp binary
+
+# Fonts
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.eot binary
+
+# Archives
+*.zip binary
+*.tar binary
+*.gz binary
+*.rar binary
+*.7z binary
+
+# Compiled
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+
+# PDF
+*.pdf binary
+
+# Audio/Video
+*.mp3 binary
+*.mp4 binary
+*.avi binary
+*.mov binary
+
+# Excluire du déploiement avec export-ignore
 CHANGELOG.md export-ignore
+.gitattributes export-ignore
+.gitignore export-ignore
+.github export-ignore
+.editorconfig export-ignore
+tests/ export-ignore
+.phpunit.cache export-ignore
+phpunit.xml export-ignore
+docker-compose*.yml export-ignore
+Dockerfile export-ignore
+.dockerignore export-ignore
+docker/ export-ignore
+README-DOCKER.md export-ignore
+Makefile export-ignore
+docker-start.sh export-ignore

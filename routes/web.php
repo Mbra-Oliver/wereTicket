@@ -158,7 +158,10 @@ Route::prefix('event-booking')->group(function () {
 
 
   //cinetpay money
-  Route::get('/cinetpay/notify', 'FrontEnd\PaymentGateway\CinetPayController@notify')->name('event_booking.cinetpay.notify');
+  Route::post('/cinetpay/callback', 'FrontEnd\PaymentGateway\CinetPayController@notify')->name('event_booking.cinetpay.notify');
+
+  Route::match(['get', 'post'], '/cinetpay/return', 'FrontEnd\PaymentGateway\CinetPayController@notify')->name('event_booking.cinetpay.return');
+
 
   Route::get('/cinetpay/cancel', 'FrontEnd\PaymentGateway\CinetPayController@cancel')->name('event_booking.cinetpay.cancel');
 });

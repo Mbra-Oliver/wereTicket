@@ -1,11 +1,35 @@
 # ========================
-# Laravel & PHP
+# Git & Version Control
+# ========================
+.git
+.gitignore
+.gitattributes
+.github
+
+# ========================
+# IDE & Editors
+# ========================
+.idea
+.vscode
+.vs
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# ========================
+# Dependencies (seront installées dans le conteneur)
 # ========================
 /vendor/
 /node_modules/
-/public/hot
-/public/storage
-/storage/*.key
+composer.phar
+
+# ========================
+# Laravel - Storage & Cache
+# ========================
 /storage/app/*
 !/storage/app/.gitkeep
 !/storage/app/public
@@ -19,106 +43,74 @@
 !/storage/framework/views/.gitkeep
 /storage/logs/*
 !/storage/logs/.gitkeep
-
-# Environment files
-.env
-.env.backup
-.env.production
-.env.local
-.env.*.local
-
-# Laravel specific
-*.log
-Homestead.json
-Homestead.yaml
-auth.json
-npm-debug.log
-yarn-error.log
-.phpunit.result.cache
-.php_cs.cache
-.php-cs-fixer.cache
-
-# IDE & Editors
-.idea/
-.vscode/
-.vscode-test
-*.swp
-*.swo
-*~
-*.sublime-project
-*.sublime-workspace
-.DS_Store
-Thumbs.db
+/bootstrap/cache/*.php
+!/bootstrap/cache/.gitkeep
 
 # ========================
-# Compression & Archives
+# Environment & Config
+# ========================
+.env
+.env.*
+!.env.example
+*.log
+
+# ========================
+# Build & Compiled Files
+# ========================
+/public/hot
+/public/storage
+/public/build
+/public/css
+/public/js
+/public/mix-manifest.json
+/dist/
+/build/
+
+# ========================
+# Testing & Coverage
+# ========================
+/coverage/
+.phpunit.result.cache
+/.phpunit.cache
+/tests/_output/
+.pest/
+
+# ========================
+# Documentation
+# ========================
+*.md
+!README.md
+/docs/
+
+# ========================
+# Docker
+# ========================
+Dockerfile*
+docker-compose*.yml
+.docker/
+.dockerignore
+
+# ========================
+# CI/CD
+# ========================
+.travis.yml
+.gitlab-ci.yml
+.circleci/
+.github/
+Jenkinsfile
+
+# ========================
+# Archives & Backups
 # ========================
 *.zip
 *.tar
 *.tar.gz
 *.rar
 *.7z
-*.bz2
-*.gz
-*.iso
-*.jar
-*.war
-*.ear
-
-# ========================
-# Build & Compiled
-# ========================
-/public/build
-/public/css
-/public/js
-/public/mix-manifest.json
-/bootstrap/cache/*.php
-!/bootstrap/cache/.gitkeep
-/dist/
-/build/
-*.compiled
-
-# ========================
-# Dependencies
-# ========================
-composer.phar
-composer.lock.bak
-package-lock.json.bak
-yarn.lock.bak
-
-# ========================
-# Testing & Coverage
-# ========================
-/coverage/
-.nyc_output
-*.lcov
-/.phpunit.cache
-/tests/_output/
-.pest/
-
-# ========================
-# Node & NPM
-# ========================
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-.pnpm-debug.log*
-.npm
-.yarn-integrity
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
-.pnp.*
-
-# ========================
-# Docker
-# ========================
-docker-compose.override.yml
-.docker/
-*.dockerignore.bak
+*.bak
+*.backup
+*.tmp
+*.temp
 
 # ========================
 # Database
@@ -131,15 +123,13 @@ docker-compose.override.yml
 /database/*.sqlite3
 
 # ========================
-# Backup & Temporary
+# NPM & Yarn
 # ========================
-*.bak
-*.backup
-*.tmp
-*.temp
-*~
-.cache
-.temp
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
 
 # ========================
 # OS Files
@@ -154,7 +144,7 @@ Thumbs.db
 desktop.ini
 
 # ========================
-# Security & Sensitive
+# Security
 # ========================
 *.pem
 *.key

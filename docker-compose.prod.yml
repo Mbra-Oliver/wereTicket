@@ -1,0 +1,130 @@
+version: "3.8"
+
+# ========================
+# Configuration Production
+# ========================
+# Utilisation: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  # Application PHP-FPM (Production)
+  app:
+    build:
+      target: production  # Utilise le stage 'production' du Dockerfile
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - AUTO_MIGRATE=false
+      - AUTO_SEED=false
+    restart: always
+    # Supprimer les volumes de développement
+    volumes:
+      # Garder uniquement le code source et les dossiers critiques
+      - ./storage:/var/www/storage
+      - ./public:/var/www/public
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+
+  # Serveur Web Nginx (Production)
+  web:
+    restart: always
+    # Enlever le bind mount du code source pour la sécurité
+    volumes:
+      - ./public:/var/www/public:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - nginx_logs:/var/log/nginx
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+  # Base de données MySQL (Production)
+  db:
+    restart: always
+    # Désactiver l'exposition du port en production
+    ports: []
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+
+  # Redis (Production)
+  redis:
+    restart: always
+    # Désactiver l'exposition du port en production
+    ports: []
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # Queue Worker (Production)
+  queue-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: wereticket_queue_prod
+    restart: always
+    working_dir: /var/www
+    volumes:
+      - ./storage:/var/www/storage
+    networks:
+      - wereticket_network
+    depends_on:
+      - app
+      - redis
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600 --daemon
+    deploy:
+      replicas: 2  # 2 workers pour la production
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+  # Scheduler (Cron Jobs)
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: wereticket_scheduler
+    restart: always
+    working_dir: /var/www
+    volumes:
+      - ./storage:/var/www/storage
+    networks:
+      - wereticket_network
+    depends_on:
+      - app
+      - redis
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    command: >
+      sh -c "while true; do
+        php artisan schedule:run --verbose --no-interaction &
+        sleep 60
+      done"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M

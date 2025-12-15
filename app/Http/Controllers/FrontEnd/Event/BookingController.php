@@ -298,9 +298,9 @@ class BookingController extends Controller
         'email' => $info['email'],
         'phone' => $info['phone'],
         'country' => $info['country'],
-        'state' => $info['state'],
-        'city' => $info['city'],
-        'zip_code' => $info['zip_code'],
+        'state' => $info['state'] ?? '',
+        'city' => $info['city'] ?? '',
+        'zip_code' => $info['zip_code'] ?? '00225',
         'address' => $info['address'],
         'event_id' => $info['event_id'],
         'organizer_id' => $organizer_id,
@@ -327,6 +327,8 @@ class BookingController extends Controller
       ]);
       return $booking;
     } catch (\Exception $th) {
+
+      throw $th;
     }
   }
 

@@ -20,6 +20,8 @@ class VerifyCsrfToken extends Middleware
     '*/iyzico/notify',
     '*/paytabs/notify/',
     '*/phonepe/notify',
-    '/xendit/callback'
+    '/xendit/callback',
+    '*/cinetpay/return',
+    '*/cinetpay/notify'
   ];
 }
