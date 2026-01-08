@@ -17,11 +17,11 @@
   <title>{{ 'Invoice | ' . config('app.name') }}</title>
 
   {{-- fav icon --}}
-  <link rel="shortcut icon" type="image/png" href="{{ asset('assets/admin/img/' . $websiteInfo->favicon) }}">
+  <link rel="shortcut icon" type="image/png" href="{{ public_path('assets/admin/img/' . $websiteInfo->favicon) }}">
 
   {{-- styles --}}
-  <link rel="stylesheet" href="{{ asset('assets/admin/css/bootstrap.min.css') }}">
-  <link rel="stylesheet" href="{{ asset('assets/admin/css/invoice.css') }}">
+  <link rel="stylesheet" href="{{ public_path('assets/admin/css/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ public_path('assets/admin/css/invoice.css') }}">
   @php
     $_15px = '15px';
     $_10px = '10px';
@@ -210,7 +210,7 @@
         <p class="text-center">
           <span>
             <img class="img-fluid" alt="image"
-              src="{{ asset('assets/admin/img/event_ticket_logo/' . $event->ticket_logo) }}" />
+              src="{{ public_path('assets/admin/img/event_ticket_logo/' . $event->ticket_logo) }}" />
           </span>
         </p>
       @endif
@@ -222,7 +222,7 @@
               <td class="right p-3" style="width:16.666667%;">
                 <p class="text-center">
                   <img width="111" height="111" alt="image"
-                    src="{{ asset('assets/admin/qrcodes/' . $bookingInfo->booking_id . '__' . $variation['unique_id'] . '.svg') }}"
+                    src="{{ public_path('assets/admin/qrcodes/' . $bookingInfo->booking_id . '__' . $variation['unique_id'] . '.svg') }}"
                     alt="">
                 </p>
               </td>
@@ -231,7 +231,7 @@
                 style="width:33.333333%; @if (empty($event->ticket_image)) background-color:{{ $bg_color }}; @endif">
                 @if (!empty($event->ticket_image))
                   <img alt="image" width="100%"
-                    src="{{ asset('assets/admin/img/event_ticket/' . $event->ticket_image) }}" />
+                    src="{{ public_path('assets/admin/img/event_ticket/' . $event->ticket_image) }}" />
                 @endif
               </td>
             @endif
@@ -404,14 +404,14 @@
                 style="width:33.333333%; @if (empty($event->ticket_image)) background-color:{{ $bg_color }}; @endif">
                 @if (!empty($event->ticket_image))
                   <img alt="image" width="100%"
-                    src="{{ asset('assets/admin/img/event_ticket/' . $event->ticket_image) }}" />
+                    src="{{ public_path('assets/admin/img/event_ticket/' . $event->ticket_image) }}" />
                 @endif
               </td>
             @else
               <td class="right p-3" style="width:16.666667%;">
                 <p class="text-center">
                   <img width="111" height="111" alt="image"
-                    src="{{ asset('assets/admin/qrcodes/' . $bookingInfo->booking_id . '__' . $variation['unique_id'] . '.svg') }}"
+                    src="{{ public_path('assets/admin/qrcodes/' . $bookingInfo->booking_id . '__' . $variation['unique_id'] . '.svg') }}"
                     alt="">
                 </p>
               </td>
@@ -438,7 +438,7 @@
         <p class="text-center">
           <span>
             <img class="img-fluid" alt="image"
-              src="{{ asset('assets/admin/img/event_ticket_logo/' . $event->ticket_logo) }}" />
+              src="{{ public_path('assets/admin/img/event_ticket_logo/' . $event->ticket_logo) }}" />
           </span>
         </p>
       @endif
@@ -450,7 +450,7 @@
               <td class="right p-3" style="width:16.666667%;">
                 <p class="text-center">
                   <img width="111" height="111" alt="image"
-                    src="{{ asset('assets/admin/qrcodes/' . $bookingInfo->booking_id . '__' . $i . '.svg') }}">
+                    src="{{ public_path('assets/admin/qrcodes/' . $bookingInfo->booking_id . '__' . $i . '.svg') }}">
                 </p>
               </td>
             @else
@@ -458,7 +458,7 @@
                 style="width:33.333333%; @if (empty($event->ticket_image)) background-color:{{ $bg_color }}; @endif">
                 @if (!empty($event->ticket_image))
                   <img alt="image" width="100%"
-                    src="{{ asset('assets/admin/img/event_ticket/' . $event->ticket_image) }}" />
+                    src="{{ public_path('assets/admin/img/event_ticket/' . $event->ticket_image) }}" />
                 @endif
               </td>
             @endif
@@ -607,14 +607,14 @@
                 style="width:33.333333%; @if (empty($event->ticket_image)) background-color:{{ $bg_color }}; @endif">
                 @if (!empty($event->ticket_image))
                   <img alt="image" width="100%"
-                    src="{{ asset('assets/admin/img/event_ticket/' . $event->ticket_image) }}" />
+                    src="{{ public_path('assets/admin/img/event_ticket/' . $event->ticket_image) }}" />
                 @endif
               </td>
             @else
               <td class="right p-3" style="width:16.666667%;">
                 <p class="text-center">
                   <img width="111" height="111" alt="image"
-                    src="{{ asset('assets/admin/qrcodes/' . $bookingInfo->booking_id . '__' . $i . '.svg') }}">
+                    src="{{ public_path('assets/admin/qrcodes/' . $bookingInfo->booking_id . '__' . $i . '.svg') }}">
                 </p>
               </td>
             @endif

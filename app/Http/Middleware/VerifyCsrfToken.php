@@ -6,22 +6,22 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken as Middleware;
 
 class VerifyCsrfToken extends Middleware
 {
-  /**
-   * The URIs that should be excluded from CSRF verification.
-   *
-   * @var array
-   */
-  protected $except = [
-    '*/flutterwave/notify',
-    '*/razorpay/notify',
-    '*/mercadopago/notify',
-    '*/paytm/notify',
-    'organizer/check-qrcode/',
-    '*/iyzico/notify',
-    '*/paytabs/notify/',
-    '*/phonepe/notify',
-    '/xendit/callback',
-    '*/cinetpay/return',
-    '*/cinetpay/notify'
-  ];
+    /**
+     * The URIs that should be excluded from CSRF verification.
+     *
+     * @var array<int, string>
+     */
+    protected $except = [
+        'flutterwave/notify',
+        'razorpay/notify',
+        'mercadopago/notify',
+        'paytm/notify',
+        'organizer/check-qrcode',
+        'iyzico/notify',
+        'paytabs/notify',
+        'phonepe/notify',
+        'xendit/callback',
+        'event-booking/cinetpay/return/*',
+        'event-booking/cinetpay/notify/*',
+    ];
 }

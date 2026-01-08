@@ -207,7 +207,7 @@
           @if (request()->routeIs('admin.event.booking')) active
           @elseif (request()->routeIs('admin.event_booking.details')) active  
           @elseif (request()->routeIs('admin.event_management.coupons')) active  
-          @elseif (request()->routeIs('admin.event_booking.settings.guest_checkout')) active  
+          @elseif (request()->routeIs('admin.event_booking.settings.preference')) active  
           @elseif (request()->routeIs('admin.event_booking.settings.tax_commission')) active  
           @elseif (request()->routeIs('admin.event_booking.report')) active @endif">
             <a data-toggle="collapse" href="#event_bookings">
@@ -219,7 +219,7 @@
             <div id="event_bookings"
               class="collapse
             @if (request()->routeIs('admin.event_management.coupons')) show 
-            @elseif (request()->routeIs('admin.event_booking.settings.guest_checkout')) show 
+            @elseif (request()->routeIs('admin.event_booking.settings.preference')) show 
             @elseif (request()->routeIs('admin.event.booking')) show 
             @elseif (request()->routeIs('admin.event_booking.details')) show 
             @elseif (request()->routeIs('admin.event_booking.report')) show 
@@ -228,21 +228,20 @@
 
                 <li class="submenu">
                   <a data-toggle="collapse" href="#EventsSettings"
-                    aria-expanded="{{ request()->routeIs('admin.event_management.coupons') || request()->routeIs('admin.event_booking.settings.tax_commission') || request()->routeIs('admin.event_booking.settings.guest_checkout') ? 'true' : 'false' }}">
+                    aria-expanded="{{ request()->routeIs('admin.event_management.coupons') || request()->routeIs('admin.event_booking.settings.tax_commission') || request()->routeIs('admin.event_booking.settings.preference') ? 'true' : 'false' }}">
                     <span class="sub-item">{{ __('Settings') }}</span>
                     <span class="caret"></span>
                   </a>
                   <div
                     class="collapse
                     @if (request()->routeIs('admin.event_management.coupons')) show 
-                    @elseif (request()->routeIs('admin.event_booking.settings.guest_checkout')) show 
+                    @elseif (request()->routeIs('admin.event_booking.settings.preference')) show 
                     @elseif (request()->routeIs('admin.event_booking.settings.tax_commission')) show @endif"
                     id="EventsSettings">
                     <ul class="nav nav-collapse subnav">
-                      <li
-                        class="{{ request()->routeIs('admin.event_booking.settings.guest_checkout') ? 'active' : '' }}">
-                        <a href="{{ route('admin.event_booking.settings.guest_checkout') }}">
-                          <span class="sub-item">{{ __('Guest Checkout') }}</span>
+                      <li class="{{ request()->routeIs('admin.event_booking.settings.preference') ? 'active' : '' }}">
+                        <a href="{{ route('admin.event_booking.settings.preference') }}">
+                          <span class="sub-item">{{ __('Preference') }}</span>
                         </a>
                       </li>
                       <li class="{{ request()->routeIs('admin.event_management.coupons') ? 'active' : '' }}">

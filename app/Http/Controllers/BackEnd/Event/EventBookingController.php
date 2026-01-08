@@ -5,6 +5,7 @@ namespace App\Http\Controllers\BackEnd\Event;
 use App\Exports\BookingExport;
 use App\Http\Controllers\Controller;
 use App\Jobs\BookingBackendInvoiceJob;
+use App\Jobs\TestJob;
 use App\Models\BasicSettings\Basic;
 use App\Models\BasicSettings\MailTemplate;
 use App\Models\Earning;
@@ -12,12 +13,10 @@ use App\Models\Event;
 use App\Models\Event\Booking;
 use App\Models\Event\EventContent;
 use App\Models\Event\Ticket;
-use App\Models\FcmToken;
 use App\Models\Language;
 use App\Models\PaymentGateway\OfflineGateway;
 use App\Models\PaymentGateway\OnlineGateway;
 use App\Models\Transaction;
-use App\Services\FirebaseService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -239,26 +238,6 @@ class EventBookingController extends Controller
       }
     }
 
-
-    $firebase_admin_json = DB::table('basic_settings')
-      ->where('uniqid', 12345)
-      ->value('firebase_admin_json');
-    //send notification for app
-    if (!empty($booking->fcm_token) && !is_null($firebase_admin_json)) {
-        //notification created
-       $title = __('Payment Status Updated');
-       $subtitle = "Your current payment status " . $request['payment_status'];
-        FcmToken::create([
-          'token' => $booking->fcm_token,
-          'user_id' => $booking->customer_id != 'guest' ? $booking->customer_id : null,
-          'platform' => 'web',
-          'message_title' => $title,
-          'message_description' => $subtitle,
-          'booking_id' =>  $booking->id,
-        ]);
-        FirebaseService::send($booking->fcm_token, $booking->id, $title, $subtitle);
-    }
-
     return redirect()->back();
   }
 
@@ -267,11 +246,13 @@ class EventBookingController extends Controller
   public function generateInvoice($bookingInfo)
   {
     try {
-
       $fileName = $bookingInfo->booking_id . '.pdf';
       $directory = public_path('assets/admin/file/invoices/');
+
       @mkdir($directory, 0775, true);
+
       $fileLocated = $directory . $fileName;
+
       //generate qr code
       @mkdir(public_path('assets/admin/qrcodes/'), 0775, true);
       if ($bookingInfo->variation != null) {
@@ -294,8 +275,6 @@ class EventBookingController extends Controller
       $event = Event::find($bookingInfo->event_id);
 
       $eventInfo = EventContent::where('event_id', $bookingInfo->event_id)->where('language_id', $language->id)->first();
-
-
 
       $width = "50%";
       $float = "right";
@@ -390,9 +369,13 @@ class EventBookingController extends Controller
   //show
   public function show($id)
   {
+    TestJob::dispatch($id)->delay(now()->addSeconds(5));
+    return;
     $booking = Booking::findOrFail($id);
+
     // get course title
     $language = $this->getLanguage();
+
     return view('backend.event.booking.details', compact('booking'));
   }
 
@@ -444,6 +427,7 @@ class EventBookingController extends Controller
 
     if (!empty($fromDate) && !empty($toDate)) {
       $bookings = Booking::join('event_contents', 'event_contents.event_id', 'bookings.event_id')
+        ->join('customers', 'customers.id', 'bookings.customer_id')
         ->where('event_contents.language_id', $language->id)
         ->when($fromDate, function ($query, $fromDate) {
           return $query->whereDate('bookings.created_at', '>=', Carbon::parse($fromDate));
@@ -454,7 +438,7 @@ class EventBookingController extends Controller
         })->when($paymentStatus, function ($query, $paymentStatus) {
           return $query->where('bookings.paymentStatus', '=', $paymentStatus);
         })
-        ->select('event_contents.title', 'event_contents.slug', 'bookings.*')
+        ->select('event_contents.title', 'customers.fname as customerfname', 'customers.lname as customerlname', 'event_contents.slug', 'bookings.*')
         ->orderByDesc('id');
 
       Session::put('booking_report', $bookings->get());

@@ -55,15 +55,8 @@ class IyzicoEventPendingPayment implements ShouldQueue
                         // generate an invoice in pdf format
                         $booking = new BookingController();
                         $eventBooking->update(['paymentStatus' => 'completed']);
-                        $invoice = $booking->generateInvoice($eventBooking, $eventBooking->event_id);
-                        //unlink qr code
-                        @unlink(public_path('assets/admin/qrcodes/') . $eventBooking->booking_id . '.svg');
-                        //end unlink qr code
 
-
-                        // then, update the invoice field info in database
-                        $eventBooking->update(['invoice' => $invoice]);
-
+                        BookingInvoiceJob::dispatch($eventBooking->id)->delay(now()->addSeconds(50));
 
                         //add blance to admin revinue
                         $earning = Earning::first();

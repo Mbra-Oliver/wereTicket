@@ -4,6 +4,7 @@ namespace App\Http\Controllers\FrontEnd\PaymentGateway;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FrontEnd\Event\BookingController;
+use App\Jobs\BookingInvoiceJob;
 use App\Models\BasicSettings\Basic;
 use App\Models\Earning;
 use Cartalyst\Stripe\Exception\CardErrorException;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StripeController extends Controller
 {
@@ -113,14 +115,39 @@ class StripeController extends Controller
 
           // store the course enrolment information in database
           $bookingInfo = $enrol->storeData($arrData);
-          // generate an invoice in pdf format
-          $invoice = $enrol->generateInvoice($bookingInfo, $eventId);
-          //unlink qr code
-          @unlink(public_path('assets/admin/qrcodes/') . $bookingInfo->booking_id . '.svg');
-          //end unlink qr code
 
-          // then, update the invoice field info in database
-          $bookingInfo->update(['invoice' => $invoice]);
+          $ticket = DB::table('basic_settings')->select('how_ticket_will_be_send')->first();
+
+          if ($ticket->how_ticket_will_be_send == 'instant') {
+            // generate an invoice in pdf format
+            $invoice = $enrol->generateInvoice($bookingInfo, $bookingInfo->event_id);
+
+            //unlink qr code 
+            if (
+              $bookingInfo->variation != null
+            ) {
+              //generate qr code for without wise ticket
+              $variations = json_decode($bookingInfo->variation, true);
+              foreach ($variations as $variation) {
+
+                @unlink(public_path('assets/admin/qrcodes/') . $bookingInfo->booking_id . '__' . $variation['unique_id'] . '.svg');
+              }
+            } else {
+              //generate qr code for without wise ticket
+              for ($i = 1; $i <= $bookingInfo->quantity; $i++) {
+                @unlink(public_path('assets/admin/qrcodes/') . $bookingInfo->booking_id . '__' . $i .  '.svg');
+              }
+            }
+
+            // then, update the invoice field info in database
+            $bookingInfo->invoice = $invoice;
+            $bookingInfo->save();
+
+            // send a mail to the customer with the invoice
+            $enrol->sendMail($bookingInfo);
+          } else {
+            BookingInvoiceJob::dispatch($bookingInfo->id)->delay(now()->addSeconds(10));
+          }
 
           //add blance to admin revinue
           $earning = Earning::first();
@@ -145,9 +172,6 @@ class StripeController extends Controller
           $organizerData['commission'] = $bookingInfo->commission;
           storeOrganizer($organizerData);
 
-          // send a mail to the customer with the invoice
-          $enrol->sendMail($bookingInfo);
-
           // remove all session data
           $request->session()->forget('event_id');
           $request->session()->forget('selTickets');
@@ -155,7 +179,8 @@ class StripeController extends Controller
           $request->session()->forget('paymentId');
           $request->session()->forget('discount');
           return redirect()->route('event_booking.complete', [
-            'id' => $eventId, 'booking_id' => $bookingInfo->id
+            'id' => $eventId,
+            'booking_id' => $bookingInfo->id
           ]);
         } else {
           return redirect()->route('event_booking.cancel', ['id' => $eventId]);

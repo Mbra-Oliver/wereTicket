@@ -51,11 +51,11 @@
                     $start_time = str_replace(':', '', $event->start_time);
                     $end_date = str_replace('-', '', $event->end_date);
                     $end_time = str_replace(':', '', $event->end_time);
-                
+
                     $s_time = $start_time - 5;
                     $e_time = $end_time - 5;
                 }
-                
+
               @endphp
               <div class="dropdown show pt-4 pb-4">
                 <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown"
@@ -78,7 +78,7 @@
               <p>{{ __('Please wait for confirmation') }}.</p>
             @else
               <p class="mb-1">{{ __('Your transaction was successful') }}.</p>
-              <p>{{ __('We have sent you a mail with an invoice') }}.</p>
+              <p>{{ __('Please wait we will send you a mail with an invoice') . '.' }}</p>
             @endif
 
             <p class="mb-0">{{ __('Thank you') }}.</p>

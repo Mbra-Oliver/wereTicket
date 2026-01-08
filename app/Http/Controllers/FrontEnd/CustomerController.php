@@ -279,7 +279,7 @@ class CustomerController extends Controller
       'email' => [
         'required',
         'email:rfc,dns',
-        new MatchEmailRule('organizer')
+        new MatchEmailRule('customers')
       ]
     ];
 
@@ -289,7 +289,7 @@ class CustomerController extends Controller
       return redirect()->back()->withErrors($validator)->withInput();
     }
 
-    $user = Organizer::where('email', $request->email)->first();
+    $user = Customer::where('email', $request->email)->first();
 
     // first, get the mail template information from db
     $mailTemplate = MailTemplate::where('mail_type', 'reset_password')->first();

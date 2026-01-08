@@ -4,11 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\IyzicoEventPendingPayment;
-use App\Jobs\IyzicoPendingPaymentCheck;
 use App\Jobs\IyzicoProductOrderPendingPayment;
 use App\Models\Event\Booking;
 use App\Models\ShopManagement\ProductOrder;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 
 class CronJobController extends Controller
 {
@@ -38,7 +37,16 @@ class CronJobController extends Controller
                 }
             }
         } catch (\Throwable $th) {
-            dd($th);
+        }
+    }
+    public function sendTicket()
+    {
+        try {
+
+            Artisan::call('queue:work', [
+                '--stop-when-empty' => true, // To avoid infinite running in case
+            ]);
+        } catch (\Throwable $th) {
         }
     }
 }

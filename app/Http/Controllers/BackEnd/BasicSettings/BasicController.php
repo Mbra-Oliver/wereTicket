@@ -867,16 +867,17 @@ class BasicController extends Controller
   }
 
   // /taxCommission
-  public function guestCheckout()
+  public function preference()
   {
-    $content = DB::table('basic_settings')->select('event_guest_checkout_status')->first();
-    return view('backend.event.guest-checkout', compact('content'));
+    $content = DB::table('basic_settings')->select('event_guest_checkout_status', 'how_ticket_will_be_send')->first();
+    return view('backend.event.preference', compact('content'));
   }
 
-  public function updateGuestCheckout(Request $request)
+  public function updatePreference(Request $request)
   {
     $rules = [
-      'event_guest_checkout_status' => 'required|numeric'
+      'event_guest_checkout_status' => 'required|numeric',
+      'how_ticket_will_be_send' => 'required'
     ];
 
     $validator = Validator::make($request->all(), $rules);
@@ -889,6 +890,7 @@ class BasicController extends Controller
       ['uniqid' => 12345],
       [
         'event_guest_checkout_status' => $request->event_guest_checkout_status,
+        'how_ticket_will_be_send' => $request->how_ticket_will_be_send,
       ]
     );
     $request->session()->flash('success', 'Updated Successfully');

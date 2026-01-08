@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Spatie\GoogleCalendar\Event;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,11 +11,12 @@ use Spatie\GoogleCalendar\Event;
 Route::get('/offline', 'FrontEnd\HomeController@offline');
 
 Route::get('login', function () {
-  return view('frontend.organizer.login');
-})->name('login');
+  return view('frontend.organizer.login'); 
+})->name('login'); 
 
 // cron job for check iyzico payment 
 Route::get('/check-payment', 'CronJobController@checkIyzicoPendingPayment')->name('cron.check.payment');
+Route::get('/send-ticket', 'CronJobController@sendTicket')->name('cron.send.ticket');
 
 Route::get('midtrans/cancel', 'FrontEnd\HomeController@midtrans_cancel')->name('midtrans_cancel'); // banking er IPN
 Route::post('xendit/callback', 'FrontEnd\HomeController@xendit_callback')->name('xendit_cancel');
@@ -154,13 +154,14 @@ Route::prefix('event-booking')->group(function () {
   Route::get('/perfect-money/notify', 'FrontEnd\PaymentGateway\PerfectMoneyController@notify')->name('event_booking.perfect-money.notify');
 
   Route::get('/perfect-money/cancel', 'FrontEnd\PaymentGateway\PerfectMoneyController@cancel')->name('event_booking.perfect-money.cancel');
-
-
-
+  
+  
+  
+  
   //cinetpay money
-  Route::post('/cinetpay/callback', 'FrontEnd\PaymentGateway\CinetPayController@notify')->name('event_booking.cinetpay.notify');
+  Route::post('/cinetpay/callback/{eventId}', 'FrontEnd\PaymentGateway\CinetPayController@notify')->name('event_booking.cinetpay.notify');
 
-  Route::match(['get', 'post'], '/cinetpay/return', 'FrontEnd\PaymentGateway\CinetPayController@notify')->name('event_booking.cinetpay.return');
+  Route::match(['get','post'],'/cinetpay/return/{eventId}', 'FrontEnd\PaymentGateway\CinetPayController@returnFromPayment')->name('event_booking.cinetpay.return');
 
 
   Route::get('/cinetpay/cancel', 'FrontEnd\PaymentGateway\CinetPayController@cancel')->name('event_booking.cinetpay.cancel');

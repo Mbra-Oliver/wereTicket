@@ -220,13 +220,13 @@
                                                     </td>
                                                     <td>
                                                         @if ($booking->gatewayType == 'online')
-                                                            @if ($booking->paymentStatus === 1)
+                                                            @if ($booking->paymentStatus === '1')
                                                                 <h2 class="d-inline-block"><span
                                                                         class="badge badge-success">{{ __('Completed') }}</span>
                                                                 </h2>
                                                             @else
                                                                 <h2 class="d-inline-block"><span
-                                                                        class="badge badge-warning">{{ __('En attente') }}</span>
+                                                                        class="badge badge-warning text-white" style="color:white !important">{{ __('En attente') }}</span>
                                                                 </h2>
                                                             @endif
                                                         @elseif ($booking->gatewayType == 'offline')

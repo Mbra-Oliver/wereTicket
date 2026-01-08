@@ -187,9 +187,6 @@ class IyzipayController extends Controller
         // store the course enrolment information in database
         $bookingInfo = $booking->storeData($arrData);
 
-        // send a mail to the customer with the invoice
-        $booking->sendMail($bookingInfo);
-
         // remove all session data
         Session::forget('event_id');
         Session::forget('selTickets');

@@ -23,6 +23,7 @@ use App\Http\Controllers\FrontEnd\PaymentGateway\StripeController;
 use App\Http\Controllers\FrontEnd\PaymentGateway\ToyyibpayController;
 use App\Http\Controllers\FrontEnd\PaymentGateway\XenditController;
 use App\Http\Controllers\FrontEnd\PaymentGateway\YocoController;
+use App\Jobs\BookingInvoiceJob;
 use App\Models\BasicSettings\Basic;
 use App\Models\BasicSettings\MailTemplate;
 use App\Models\Event;
@@ -36,6 +37,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use PHPMailer\PHPMailer\PHPMailer;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -45,8 +47,6 @@ class BookingController extends Controller
   public function index(Request $request, $id)
   {
     $basic = Basic::select('event_guest_checkout_status')->first();
-
-
     if ($basic->event_guest_checkout_status == 0 && $request->type != 'guest') {
       // check whether user is logged in or not
       if (Auth::guard('customer')->check() == false) {
@@ -56,11 +56,8 @@ class BookingController extends Controller
 
     // payment
     if ($request->total != 0 || Session::get('sub_total') != 0) {
-
-
       if (!$request->exists('gateway')) {
         Session::flash('error', 'Please select a payment method.');
-
 
         return redirect()->back();
       } else if ($request['gateway'] == 'paypal') {
@@ -128,14 +125,14 @@ class BookingController extends Controller
         $xindit = new XenditController();
 
         return $xindit->makePayment($request, $id);
+      }  else if ($request['gateway'] == 'cinetpay') {
+        $cinetpay = new CinetPayController();
+
+        return $cinetpay->makePayment($request, $id);
       } else if ($request['gateway'] == 'myfatoorah') {
         $xindit = new MyFatoorahController();
 
         return $xindit->makePayment($request, $id);
-      } else if ($request['gateway'] == 'cinetpay') {
-        $cinetpay = new CinetPayController();
-
-        return $cinetpay->makePayment($request, $id);
       } else if ($request['gateway'] == 'perfect_money') {
         $perfect_money = new PerfectMoneyController();
 
@@ -176,27 +173,47 @@ class BookingController extends Controller
 
         $bookingInfo = $this->storeData($arrData);
 
-        // generate an invoice in pdf format
-        $invoice = $this->generateInvoice($bookingInfo, $event['id']);
-        //unlink qr code
-        @mkdir(public_path('assets/admin/qrcodes/'), 0775, true);
-        @unlink(public_path('assets/admin/qrcodes/') . $bookingInfo->booking_id . '.svg');
-        //end unlink qr code
+        $ticket = DB::table('basic_settings')->select('how_ticket_will_be_send')->first();
 
-        // then, update the invoice field info in database
-        $bookingInfo->update(['invoice' => $invoice]);
+        if ($ticket->how_ticket_will_be_send == 'instant') {
+          // generate an invoice in pdf format
+          $invoice = $bookingInfo->generateInvoice($bookingInfo, $bookingInfo->event_id);
 
-        // send a mail to the customer with the invoice
-        $this->sendMail($bookingInfo);
+          //unlink qr code 
+          if (
+            $bookingInfo->variation != null
+          ) {
+            //generate qr code for without wise ticket
+            $variations = json_decode($bookingInfo->variation, true);
+            foreach ($variations as $variation) {
+
+              @unlink(public_path('assets/admin/qrcodes/') . $bookingInfo->booking_id . '__' . $variation['unique_id'] . '.svg');
+            }
+          } else {
+            //generate qr code for without wise ticket
+            for ($i = 1; $i <= $bookingInfo->quantity; $i++) {
+              @unlink(public_path('assets/admin/qrcodes/') . $bookingInfo->booking_id . '__' . $i .  '.svg');
+            }
+          }
+
+          // then, update the invoice field info in database
+          $bookingInfo->invoice = $invoice;
+          $bookingInfo->save();
+
+          // send a mail to the customer with the invoice
+          $bookingInfo->sendMail($bookingInfo);
+        } else {
+          BookingInvoiceJob::dispatch($bookingInfo->id)->delay(now()->addSeconds(10));
+        }
 
         $request->session()->forget('event_id');
         $request->session()->forget('selTickets');
         $request->session()->forget('arrData');
         $request->session()->forget('discount');
 
-        return redirect()->route('event_booking.complete', ['id' => $event['id'], 'booking_id' => $bookingInfo->id, 'via' => 'offline']); //code...
+        return redirect()->route('event_booking.complete', ['id' => $event['id'], 'booking_id' => $bookingInfo->id, 'via' => 'offline']);
       } catch (\Throwable $th) {
-        return view('errors.404');
+        return view('errors.404');   
       }
     }
   }
@@ -396,12 +413,12 @@ class BookingController extends Controller
     $mailBody = str_replace('{order_id}', $orderId, $mailBody);
     $mailBody = str_replace('{title}', '<a href="' . route('event.details', [$eventContent->slug, $eventContent->event_id]) . '">' . $eventTitle . '</a>', $mailBody);
     $mailBody = str_replace('{website_title}', $websiteTitle, $mailBody);
-    if ($event->event_type == 'online') {
+    if($event->event_type == 'online'){
       $mailBody = str_replace('{meeting_url}', $event->meeting_url, $mailBody);
-    } else {
+    }else{
       $mailBody = str_replace('{meeting_url}', '', $mailBody);
     }
-
+    
 
     // initialize a new mail
     $mail = new PHPMailer(true);
@@ -483,12 +500,15 @@ class BookingController extends Controller
       $mb = "35px";
       $ml = "18px";
 
-      PDF::loadView('frontend.event.invoice', compact('bookingInfo', 'event', 'eventInfo', 'width', 'float', 'mb', 'ml', 'language'))->save($fileLocated);
+      $websiteInfo = Basic::first();
+
+      PDF::loadView('frontend.event.invoice', compact('bookingInfo', 'event', 'eventInfo', 'width', 'float', 'mb', 'ml', 'language', 'websiteInfo'))->save($fileLocated);
 
       return $fileName;
     } catch (\Exception $e) {
+      Log::info($e->getMessage());
       Session::flash('error', $e->getMessage());
-      return;
+      return "z";
     }
   }
 }

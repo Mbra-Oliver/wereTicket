@@ -1,0 +1,2 @@
+// Modifier app.listen pour Ã©couter sur le port dÃ©fini par Passenger
+const PORT = process.env.PORT || process.env.PASSENGER_APP_ENV_PORT || 3000;

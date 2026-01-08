@@ -12,38 +12,33 @@ use Illuminate\Support\Facades\Validator;
 
 class OnlineGatewayController extends Controller
 {
-  public function index()
-  {
+public function index()
+{
+    $keywords = [
+        'paypal', 'instamojo', 'paystack', 'flutterwave', 'razorpay', 'mercadopago',
+        'mollie', 'stripe', 'paytm', 'midtrans', 'iyzico', 'paytabs',
+        'toyyibpay', 'phonepe', 'yoco', 'xendit', 'myfatoorah', 'perfect_money', 'cinetpay'
+    ];
+
+    $gatewayInfo = [];
+
     try {
-      $gatewayInfo['paypal'] = OnlineGateway::where('keyword', 'paypal')->first();
-      $gatewayInfo['instamojo'] = OnlineGateway::where('keyword', 'instamojo')->first();
-      $gatewayInfo['paystack'] = OnlineGateway::where('keyword', 'paystack')->first();
-      $gatewayInfo['flutterwave'] = OnlineGateway::where('keyword', 'flutterwave')->first();
-      $gatewayInfo['razorpay'] = OnlineGateway::where('keyword', 'razorpay')->first();
-      $gatewayInfo['mercadopago'] = OnlineGateway::where('keyword', 'mercadopago')->first();
-      $gatewayInfo['mollie'] = OnlineGateway::where('keyword', 'mollie')->first();
-      $gatewayInfo['stripe'] = OnlineGateway::where('keyword', 'stripe')->first();
-      $gatewayInfo['paytm'] = OnlineGateway::where('keyword', 'paytm')->first();
-      $gatewayInfo['midtrans'] = OnlineGateway::where('keyword', 'midtrans')->first();
-      $gatewayInfo['iyzico'] = OnlineGateway::where('keyword', 'iyzico')->first();
-      $gatewayInfo['paytabs'] = OnlineGateway::where('keyword', 'paytabs')->first();
-      $gatewayInfo['toyyibpay'] = OnlineGateway::where('keyword', 'toyyibpay')->first();
-      $gatewayInfo['phonepe'] = OnlineGateway::where('keyword', 'phonepe')->first();
-      $gatewayInfo['yoco'] = OnlineGateway::where('keyword', 'yoco')->first();
-      $gatewayInfo['xendit'] = OnlineGateway::where('keyword', 'xendit')->first();
-      $gatewayInfo['myfatoorah'] = OnlineGateway::where('keyword', 'myfatoorah')->first();
-      $gatewayInfo['perfect_money'] = OnlineGateway::where('keyword', 'perfect_money')->first();
+        foreach ($keywords as $keyword) {
+            $gateway = OnlineGateway::where('keyword', $keyword)->first();
+            if (!$gateway) {
+                throw new \Exception("Gateway not found for keyword: {$keyword}");
+            }
+            $gatewayInfo[$keyword] = $gateway;
+        }
 
-      $gatewayInfo['cinetpay'] = OnlineGateway::where('keyword', 'cinetpay')->first();
+        return view('backend.payment-gateways.online-gateways', $gatewayInfo);
 
-
-
-
-      return view('backend.payment-gateways.online-gateways', $gatewayInfo);
     } catch (Exception $e) {
-      dd($e);
+        // Log the error and optionally redirect back with an error message
+        Log::error('Payment Gateway loading failed: ' . $e->getMessage());
+        abort(500, 'Erreur lors du chargement des passerelles de paiement.');
     }
-  }
+}
 
   public function updatePayPalInfo(Request $request)
   {

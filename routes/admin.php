@@ -127,28 +127,31 @@ Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function
     });
   });
 
-  Route::group(['middleware' => 'permission:Event Bookings'], function () {
-    Route::get('/coupons', 'BackEnd\Event\CouponController@index')->name('admin.event_management.coupons');
-    Route::post('/store-coupon', 'BackEnd\Event\CouponController@store')->name('admin.event_management.store_coupon');
-    Route::post('/update-coupon', 'BackEnd\Event\CouponController@update')->name('admin.event_management.update_coupon');
-    Route::post('/delete-coupon/{id}', 'BackEnd\Event\CouponController@destroy')->name('admin.event_management.delete_coupon');
+  Route::prefix('/event-booking')->middleware('permission:Event Bookings')->group(function () {
 
-    Route::get('/tax-commission', 'BackEnd\BasicSettings\BasicController@taxCommission')->name('admin.event_booking.settings.tax_commission');
+    Route::prefix('/settings')->middleware('permission:Event Bookings')->group(function () {
 
-    Route::post('/update-tax-commission', 'BackEnd\BasicSettings\BasicController@updateEventTaxCommission')->name('admin.event_booking.settings.update_tax_commission');
+      Route::get('/coupons', 'BackEnd\Event\CouponController@index')->name('admin.event_management.coupons');
+      Route::post('/store-coupon', 'BackEnd\Event\CouponController@store')->name('admin.event_management.store_coupon');
+      Route::post('/update-coupon', 'BackEnd\Event\CouponController@update')->name('admin.event_management.update_coupon');
+      Route::post('/delete-coupon/{id}', 'BackEnd\Event\CouponController@destroy')->name('admin.event_management.delete_coupon');
 
-    Route::get('/guest-checkout', 'BackEnd\BasicSettings\BasicController@guestCheckout')->name('admin.event_booking.settings.guest_checkout');
-    Route::post('/update-guest-checkout', 'BackEnd\BasicSettings\BasicController@updateGuestCheckout')->name('admin.event_booking.settings.update_guest_checkout');
+      Route::get('/tax-commission', 'BackEnd\BasicSettings\BasicController@taxCommission')->name('admin.event_booking.settings.tax_commission');
 
+      Route::post('/update-tax-commission', 'BackEnd\BasicSettings\BasicController@updateEventTaxCommission')->name('admin.event_booking.settings.update_tax_commission');
 
-    Route::get('event-booking', 'BackEnd\Event\EventBookingController@index')->name('admin.event.booking');
-    Route::post('event-booking/update/payment-status/{id}', 'BackEnd\Event\EventBookingController@updatePaymentStatus')->name('admin.event_booking.update_payment_status');
-    Route::get('event-booking/details/{id}', 'BackEnd\Event\EventBookingController@show')->name('admin.event_booking.details');
+      Route::get('/preference', 'BackEnd\BasicSettings\BasicController@preference')->name('admin.event_booking.settings.preference');
+      Route::post('/update-preference', 'BackEnd\BasicSettings\BasicController@updatePreference')->name('admin.event_booking.settings.update_preference');
+    });
+
+    Route::get('', 'BackEnd\Event\EventBookingController@index')->name('admin.event.booking');
+    Route::post('/update/payment-status/{id}', 'BackEnd\Event\EventBookingController@updatePaymentStatus')->name('admin.event_booking.update_payment_status');
+    Route::get('/details/{id}', 'BackEnd\Event\EventBookingController@show')->name('admin.event_booking.details');
     Route::post('/{id}/delete', 'BackEnd\Event\EventBookingController@destroy')->name('admin.event_booking.delete');
-    Route::post('/event-booking/bulk-delete', 'BackEnd\Event\EventBookingController@bulkDestroy')->name('admin.event_booking.bulk_delete');
+    Route::post('/bulk-delete', 'BackEnd\Event\EventBookingController@bulkDestroy')->name('admin.event_booking.bulk_delete');
 
-    Route::get('/event-booking/report', 'BackEnd\Event\EventBookingController@report')->name('admin.event_booking.report');
-    Route::get('/event-booking/export', 'BackEnd\Event\EventBookingController@export')->name('admin.event_bookings.export');
+    Route::get('/report', 'BackEnd\Event\EventBookingController@report')->name('admin.event_booking.report');
+    Route::get('/export', 'BackEnd\Event\EventBookingController@export')->name('admin.event_bookings.export');
   });
 
 
@@ -606,9 +609,8 @@ Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function
     Route::get('/online-gateways', 'BackEnd\PaymentGateway\OnlineGatewayController@index')->name('admin.payment_gateways.online_gateways');
 
     Route::post('/update-paypal-info', 'BackEnd\PaymentGateway\OnlineGatewayController@updatePayPalInfo')->name('admin.payment_gateways.update_paypal_info');
-
-
-    Route::post('/update-cinetpay-info', 'BackEnd\PaymentGateway\OnlineGatewayController@updateCinetPayInfo')->name('admin.payment_gateways.update_cinetpay_info');
+    
+        Route::post('/update-cinetpay-info', 'BackEnd\PaymentGateway\OnlineGatewayController@updateCinetPayInfo')->name('admin.payment_gateways.update_cinetpay_info');
 
     Route::post('/update-instamojo-info', 'BackEnd\PaymentGateway\OnlineGatewayController@updateInstamojoInfo')->name('admin.payment_gateways.update_instamojo_info');
 

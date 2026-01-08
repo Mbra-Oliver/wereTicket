@@ -22,13 +22,13 @@
     data-bg="{{ asset('assets/admin/img/' . $basicInfo->breadcrumb) }}">
     <div class="container">
       <div class="banner-inner">
-        <h2 class="page-title">
+        <h1 class="page-title">
           @if (!empty($pageHeading))
             {{ $pageHeading->blog_page_title ?? __('Blog') }}
           @else
             {{ __('Blog') }}
           @endif
-        </h2>
+        </h1>
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('index') }}">{{ __('Home') }}</a></li>
@@ -75,7 +75,7 @@
                           href="{{ route('blogs', ['category' => $blog->categorySlug]) }}">{{ $blog->categoryName }}</a>
                         <a class="d-block" href="{{ route('blog_details', ['slug' => $blog->slug]) }}">
                           <h4 class="title">
-                            {{ strlen($blog->title) > 30 ? mb_substr($blog->title, 0, 30, 'UTF-8') . '...' : $blog->title }}
+                            {{ strlen($blog->title) > 200 ? mb_substr($blog->title, 0, 200, 'UTF-8') . '...' : $blog->title }}
                           </h4>
                         </a>
                         <p>{!! strlen(strip_tags($blog->content)) > 100

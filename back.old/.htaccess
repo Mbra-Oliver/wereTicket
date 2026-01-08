@@ -1,0 +1,12 @@
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
+PassengerAppRoot "/home/rs2429210/public_html/back/server"
+PassengerBaseURI "/"
+PassengerNodejs "/home/rs2429210/nodevenv/public_html/back/server/20/bin/node"
+PassengerAppType node
+PassengerStartupFile start.js
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
+# Forcer les types MIME pour les assets
+<IfModule mod_mime.c>
+  AddType application/javascript .js
+  AddType text/css .css
+</IfModule>

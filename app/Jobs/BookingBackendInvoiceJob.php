@@ -87,4 +87,3 @@ class BookingBackendInvoiceJob implements ShouldQueue
         }
     }
 }
-

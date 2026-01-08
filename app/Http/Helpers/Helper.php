@@ -51,6 +51,7 @@ if (function_exists('make_slug')) {
   }
 }
 
+
 if (!function_exists('make_input_name')) {
   function make_input_name($string)
   {
@@ -413,12 +414,12 @@ if (!function_exists('symbolPrice')) {
   {
     $basic = Basic::where('uniqid', 12345)->select('base_currency_symbol_position', 'base_currency_symbol')->first();
     if ($basic->base_currency_symbol_position == 'left') {
-      $data = $basic->base_currency_symbol . round($price, 2);
-      return str_replace(' ', '', $data);
-    } elseif ($basic->base_currency_symbol_position == 'right') {
-      $data = round($price, 2) . $basic->base_currency_symbol;
-      return str_replace(' ', '', $data);
-    }
+    $data = $basic->base_currency_symbol . ' ' . round($price, 2);
+    return $data;
+} elseif ($basic->base_currency_symbol_position == 'right') {
+    $data = round($price, 2) . ' ' . $basic->base_currency_symbol;
+    return $data;
+}
   }
 }
 
