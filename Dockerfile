@@ -98,14 +98,14 @@ RUN { \
     echo 'xdebug.client_port=9003'; \
     } > /usr/local/etc/php/conf.d/xdebug.ini
 
-# Copier les fichiers de configuration composer
-COPY composer.json composer.lock ./
+# Copier tout le code source (nécessaire car composer.json référence des fichiers)
+COPY . .
 
 # Installer toutes les dépendances (y compris dev)
 RUN composer install --prefer-dist --no-interaction --no-progress
 
-# Copier le reste du projet
-COPY . .
+# Rendre le script d'entrée exécutable
+RUN chmod +x /var/www/docker-entrypoint.sh
 
 # Fixer les permissions
 RUN chown -R www-data:www-data /var/www \
@@ -115,11 +115,7 @@ RUN chown -R www-data:www-data /var/www \
 # Exposer le port PHP-FPM
 EXPOSE 9000
 
-# Copier et activer le script d'entrée
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+ENTRYPOINT ["/var/www/docker-entrypoint.sh"]
 CMD ["php-fpm"]
 
 # ========================
@@ -127,14 +123,14 @@ CMD ["php-fpm"]
 # ========================
 FROM base as production
 
-# Copier uniquement les fichiers nécessaires pour l'installation
-COPY composer.json composer.lock ./
+# Copier tout le code source (nécessaire car composer.json référence des fichiers)
+COPY . .
 
 # Installer les dépendances sans dev
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
 
-# Copier le reste de l'application
-COPY . .
+# Rendre le script d'entrée exécutable
+RUN chmod +x /var/www/docker-entrypoint.sh
 
 # Optimisations Laravel pour la production
 RUN php artisan config:clear \
@@ -150,9 +146,5 @@ RUN chown -R www-data:www-data /var/www \
 # Exposer le port PHP-FPM
 EXPOSE 9000
 
-# Copier et activer le script d'entrée
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+ENTRYPOINT ["/var/www/docker-entrypoint.sh"]
 CMD ["php-fpm"]

@@ -287,21 +287,16 @@ class EventBookingController extends Controller
         }
       }
 
-      //generate qr code end
-
       // get event title
       $language =  Language::where('is_default', 1)->first();
       $event = Event::find($bookingInfo->event_id);
 
       $eventInfo = EventContent::where('event_id', $bookingInfo->event_id)->where('language_id', $language->id)->first();
 
-
-
       $width = "50%";
       $float = "right";
       $mb = "35px";
       $ml = "18px";
-
       PDF::loadView('frontend.event.invoice', compact('bookingInfo', 'event', 'eventInfo', 'width', 'float', 'mb', 'ml', 'language'))->save($fileLocated);
 
       return $fileName;

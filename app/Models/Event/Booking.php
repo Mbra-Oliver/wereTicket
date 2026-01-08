@@ -46,7 +46,8 @@ class Booking extends Model
     'attachmentFile',
     'event_date',
     'scan_status',
-    'conversation_id'
+    'conversation_id',
+    'fcm_token',
   ];
 
   public function event()
@@ -66,4 +67,21 @@ class Booking extends Model
   {
     return $this->belongsTo(Organizer::class);
   }
+
+  protected static function boot()
+  {
+    parent::boot();
+    static::deleting(function ($booking) {
+      if(!empty($booking->variation)){
+        $veriations = json_decode($booking->variation, true);
+        if(count($veriations) > 0){
+          $seatIds = array_column($veriations, 'seat_id');
+          $slotIds = array_column($veriations, 'slot_id');
+          Slot::whereIn('id', $slotIds)->update(['is_booked' => 0]);
+          SlotSeats::whereIn('id', $seatIds)->update(['is_booked' => 0]);
+        }
+      }
+    });
+  }
+
 }
