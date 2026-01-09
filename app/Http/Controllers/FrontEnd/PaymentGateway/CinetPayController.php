@@ -27,13 +27,26 @@ class CinetPayController extends Controller
         try {
             // Validation des données
             $request->validate([
-                'fname' => 'required|string',
-                'lname' => 'required|string',
-                'email' => 'required|email',
-                'phone' => 'required|string',
-                'country' => 'required|string',
-                'address' => 'required|string',
+                'fname' => 'required|string|max:255',
+                'lname' => 'required|string|max:255',
+                'email' => 'required|email|max:255',
+                'phone' => 'required|string|max:255',
+                'country' => 'required|string|max:255',
+                'address' => 'required|string|max:500',
                 'gateway' => 'required|string',
+                'state' => 'nullable|string|max:255',
+                'city' => 'required|string|max:255',
+                'zip_code' => 'nullable|string|max:20',
+            ], [
+                'fname.required' => __('The first name field is required.'),
+                'lname.required' => __('The last name field is required.'),
+                'email.required' => __('The email field is required.'),
+                'email.email' => __('The email must be a valid email address.'),
+                'phone.required' => __('The phone field is required.'),
+                'country.required' => __('The country field is required.'),
+                'address.required' => __('The address field is required.'),
+                'city.required' => __('The city field is required.'),
+                'gateway.required' => __('Please select a payment method.'),
             ]);
 
             // Récupération des informations
@@ -69,9 +82,9 @@ class CinetPayController extends Controller
                 'currencySymbol' => $currencyInfo->base_currency_symbol,
                 'currencySymbolPosition' => $currencyInfo->base_currency_symbol_position,
 
-                'state' => $request->state,
-                'city' => $request->city,
-                'zip_code' => $request->city,
+                'state' => $request->state ?? null,
+                'city' => $request->city ?? null,
+                'zip_code' => $request->zip_code ?? null,
             ];
 
             // Configuration CinetPay
@@ -100,22 +113,22 @@ class CinetPayController extends Controller
 
             $dataToSend = [
                 'transaction_id' => $bookingInfo->booking_id, // Utiliser -> car bookingInfo est un objet
-                'amount' =>$payable_amount, // Corrigé pour utiliser la vraie variable
+                'amount' => $payable_amount, // Corrigé pour utiliser la vraie variable
                 'currency' => 'XOF',
                 'customer_name' => $request->fname,
                 'customer_surname' => $request->lname,
                 'customer_email' => $request->email,
                 'customer_phone_number' => $request->phone,
                 'customer_address' => $request->address,
-                'customer_city' => $request->address,
-                'customer_state' => $request->address,
-                'customer_country' => 'CI',
+                'customer_city' => $request->city ?? $request->address,
+                'customer_state' => $request->state ?? '',
+                'customer_country' => $request->country ?? 'CI',
                 'invoice_data' => [
                     'id' => $event_id,
-                    'name' => $product->event_type,
+                    'name' => $product->event_type ?? 'Event',
                     'price' => $payable_amount,
                 ],
-                'description' => 'Achat de ticket pour l\'événement : ' . $product->name,
+                'description' => 'Achat de ticket pour l\'événement : ' . ($product->name ?? 'Event'),
                 'notify_url' => route('event_booking.cinetpay.notify', $bookingInfo->booking_id),
                 'return_url' => route('event_booking.cinetpay.return', ['eventId' => $bookingInfo->booking_id]),
                 'callback_url' => route('event_booking.cinetpay.notify', $bookingInfo->booking_id),
@@ -123,7 +136,7 @@ class CinetPayController extends Controller
                 'metadata' => json_encode([
                     'event_id' => $event_id,
                 ]),
-                'customer_zip_code' => '00225',
+                'customer_zip_code' => $request->zip_code ?? '00225',
             ];
 
 
