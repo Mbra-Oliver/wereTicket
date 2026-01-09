@@ -4,7 +4,6 @@ namespace App\Http\Controllers\BackEnd\PaymentGateway;
 
 use App\Http\Controllers\Controller;
 use App\Models\PaymentGateway\OnlineGateway;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Session;
@@ -12,33 +11,29 @@ use Illuminate\Support\Facades\Validator;
 
 class OnlineGatewayController extends Controller
 {
-public function index()
-{
-    $keywords = [
-        'paypal', 'instamojo', 'paystack', 'flutterwave', 'razorpay', 'mercadopago',
-        'mollie', 'stripe', 'paytm', 'midtrans', 'iyzico', 'paytabs',
-        'toyyibpay', 'phonepe', 'yoco', 'xendit', 'myfatoorah', 'perfect_money', 'cinetpay'
-    ];
+  public function index()
+  {
+    $gatewayInfo['paypal'] = OnlineGateway::where('keyword', 'paypal')->first();
+    $gatewayInfo['instamojo'] = OnlineGateway::where('keyword', 'instamojo')->first();
+    $gatewayInfo['paystack'] = OnlineGateway::where('keyword', 'paystack')->first();
+    $gatewayInfo['flutterwave'] = OnlineGateway::where('keyword', 'flutterwave')->first();
+    $gatewayInfo['razorpay'] = OnlineGateway::where('keyword', 'razorpay')->first();
+    $gatewayInfo['mercadopago'] = OnlineGateway::where('keyword', 'mercadopago')->first();
+    $gatewayInfo['mollie'] = OnlineGateway::where('keyword', 'mollie')->first();
+    $gatewayInfo['stripe'] = OnlineGateway::where('keyword', 'stripe')->first();
+    $gatewayInfo['paytm'] = OnlineGateway::where('keyword', 'paytm')->first();
+    $gatewayInfo['midtrans'] = OnlineGateway::where('keyword', 'midtrans')->first();
+    $gatewayInfo['iyzico'] = OnlineGateway::where('keyword', 'iyzico')->first();
+    $gatewayInfo['paytabs'] = OnlineGateway::where('keyword', 'paytabs')->first();
+    $gatewayInfo['toyyibpay'] = OnlineGateway::where('keyword', 'toyyibpay')->first();
+    $gatewayInfo['phonepe'] = OnlineGateway::where('keyword', 'phonepe')->first();
+    $gatewayInfo['yoco'] = OnlineGateway::where('keyword', 'yoco')->first();
+    $gatewayInfo['xendit'] = OnlineGateway::where('keyword', 'xendit')->first();
+    $gatewayInfo['myfatoorah'] = OnlineGateway::where('keyword', 'myfatoorah')->first();
+    $gatewayInfo['perfect_money'] = OnlineGateway::where('keyword', 'perfect_money')->first();
 
-    $gatewayInfo = [];
-
-    try {
-        foreach ($keywords as $keyword) {
-            $gateway = OnlineGateway::where('keyword', $keyword)->first();
-            if (!$gateway) {
-                throw new \Exception("Gateway not found for keyword: {$keyword}");
-            }
-            $gatewayInfo[$keyword] = $gateway;
-        }
-
-        return view('backend.payment-gateways.online-gateways', $gatewayInfo);
-
-    } catch (Exception $e) {
-        // Log the error and optionally redirect back with an error message
-        Log::error('Payment Gateway loading failed: ' . $e->getMessage());
-        abort(500, 'Erreur lors du chargement des passerelles de paiement.');
-    }
-}
+    return view('backend.payment-gateways.online-gateways', $gatewayInfo);
+  }
 
   public function updatePayPalInfo(Request $request)
   {
@@ -61,51 +56,32 @@ public function index()
 
     $paypalInfo = OnlineGateway::where('keyword', 'paypal')->first();
 
-    $paypalInfo->update([
-      'information' => json_encode($information),
-      'status' => $request->paypal_status
-    ]);
-
-    Session::flash('success', 'Updated Paypal Informaion Successfully');
-
-    return redirect()->back();
-  }
-
-  public function
-  updateCinetPayInfo(Request $request)
-  {
-    try {
-      $rules = [
-        'cinetpay_status' => 'required',
-        'cinetpay_api_key' => 'required',
-        'cinetpay_site_id' => 'required',
-        'cinetpay_secret_key' => 'required'
-      ];
-
-
-      $validator = Validator::make($request->all(), $rules);
-
-      if ($validator->fails()) {
-        return redirect()->back()->withErrors($validator->errors());
+    //mobile app set config file
+    if (isset($request->is_mobile) && $request->is_mobile == 1) {
+      $publicConfig =  base_path('public/config.php');
+      if (file_exists($publicConfig)) {
+        $publicConfig = include base_path('public/config.php');
+        $publicConfig['PAYPAL_CLIENT_ID'] = $request->paypal_client_id;
+        $publicConfig['PAYPAL_SECRET'] = $request->paypal_client_secret;
+        $publicConfig['PAYPAL_BASE'] = $request->paypal_sandbox_status == 1
+          ? 'https://api-m.sandbox.paypal.com'
+          : 'https://api-m.paypal.com';
+        $configContent = "<?php\n\nreturn " . var_export($publicConfig, true) . ";\n";
+        file_put_contents(base_path('public/config.php'), $configContent);
       }
-
-      $information['site_id'] = $request->cinetpay_site_id;
-      $information['api_key'] = $request->cinetpay_api_key;
-      $information['secret_key'] = $request->cinetpay_secret_key;
-
-      $paypalInfo = OnlineGateway::where('keyword', 'cinetpay')->first();
-
+      $paypalInfo->update([
+        'mobile_information' => json_encode($information),
+        'mobile_status' => $request->paypal_status
+      ]);
+    } else {
       $paypalInfo->update([
         'information' => json_encode($information),
-        'status' => $request->cinetpay_status
+        'status' => $request->paypal_status
       ]);
-
-      Session::flash('success', 'Updated Cinetpay Informaion Successfully');
-
-      return redirect()->back();
-    } catch (Exception $e) {
-      dd($e);
     }
+
+    Session::flash('success', 'Updated Paypal Informaion Successfully');
+    return redirect()->back();
   }
 
   public function updateInstamojoInfo(Request $request)
@@ -161,6 +137,29 @@ public function index()
       'status' => $request->paystack_status
     ]);
 
+
+    //mobile app set config file
+    if (isset($request->is_mobile) && $request->is_mobile == 1) {
+      $publicConfig =  base_path('public/config.php');
+      if (file_exists($publicConfig)) {
+        //update public/config file for paystack info(used it only for apps)
+        $publicConfig = include base_path('public/config.php');
+        $publicConfig['PAYSTACK_SECRET_KEY'] = $request->paystack_key;
+        $configContent = "<?php\n\nreturn " . var_export($publicConfig, true) . ";\n";
+        file_put_contents(base_path('public/config.php'), $configContent);
+
+        $paystackInfo->update([
+          'mobile_information' => json_encode($information),
+          'mobile_status' => $request->paystack_status
+        ]);
+      }
+    } else {
+      $paystackInfo->update([
+        'information' => json_encode($information),
+        'status' => $request->paystack_status
+      ]);
+    }
+
     Session::flash('success', 'Updated Paystack Informaion Successfully');
 
     return redirect()->back();
@@ -168,6 +167,7 @@ public function index()
 
   public function updateFlutterwaveInfo(Request $request)
   {
+
     $rules = [
       'flutterwave_status' => 'required',
       'flutterwave_public_key' => 'required',
@@ -184,22 +184,33 @@ public function index()
     $information['secret_key'] = $request->flutterwave_secret_key;
 
     $flutterwaveInfo = OnlineGateway::where('keyword', 'flutterwave')->first();
+    if (isset($request->is_mobile) && $request->is_mobile == 1) {
+      //mobile app set config file
+      $publicConfig = base_path('public/config.php');
+      if (file_exists($publicConfig)) {
+        $publicConfig = include base_path('public/config.php');
+        $publicConfig['FLW_SECRET_KEY'] = $request->flutterwave_secret_key;
+        $configContent = "<?php\n\nreturn " . var_export($publicConfig, true) . ";\n";
+        file_put_contents(base_path('public/config.php'), $configContent);
+      }
 
-    $flutterwaveInfo->update([
-      'information' => json_encode($information),
-      'status' => $request->flutterwave_status
-    ]);
-
-    $array = [
-      'FLW_PUBLIC_KEY' => $request->flutterwave_public_key,
-      'FLW_SECRET_KEY' => $request->flutterwave_secret_key
-    ];
-
-    setEnvironmentValue($array);
-    Artisan::call('config:clear');
+      $flutterwaveInfo->mobile_status = $request->flutterwave_status;
+      $flutterwaveInfo->mobile_information = json_encode($information);
+      $flutterwaveInfo->save();
+    } else {
+      $flutterwaveInfo->update([
+        'information' => json_encode($information),
+        'status' => $request->flutterwave_status
+      ]);
+      $array = [
+        'FLW_PUBLIC_KEY' => $request->flutterwave_public_key,
+        'FLW_SECRET_KEY' => $request->flutterwave_secret_key
+      ];
+      setEnvironmentValue($array);
+      Artisan::call('config:clear');
+    }
 
     Session::flash('success', 'Updated Flutterwave Informaion Successfully');
-
     return redirect()->back();
   }
 
@@ -221,11 +232,18 @@ public function index()
     $information['secret'] = $request->razorpay_secret;
 
     $razorpayInfo = OnlineGateway::where('keyword', 'razorpay')->first();
+    if (isset($request->is_mobile) && $request->is_mobile == 1) {
+      $razorpayInfo->mobile_information = json_encode($information);
+      $razorpayInfo->mobile_status = $request->razorpay_status;
+      $razorpayInfo->save();
+    }else{
+      $razorpayInfo->update([
+        'information' => json_encode($information),
+        'status' => $request->razorpay_status
+      ]);
+    }
 
-    $razorpayInfo->update([
-      'information' => json_encode($information),
-      'status' => $request->razorpay_status
-    ]);
+    //mobile app set config file
 
     Session::flash('success', 'Updated Razorpay Informaion Successfully');
 
@@ -251,10 +269,28 @@ public function index()
 
     $mercadopagoInfo = OnlineGateway::where('keyword', 'mercadopago')->first();
 
-    $mercadopagoInfo->update([
-      'information' => json_encode($information),
-      'status' => $request->mercadopago_status
-    ]);
+    //mobile app set config file
+    if (isset($request->is_mobile) && $request->is_mobile == 1) {
+      $publicConfig =  base_path('public/config.php');
+      if (file_exists($publicConfig)) {
+        //update public/config file for mercadopago info(used it only for apps)
+        $publicConfig = include base_path('public/config.php');
+        $publicConfig['MP_ACCESS_TOKEN'] = $request->mercadopago_token;
+        $configContent = "<?php\n\nreturn " . var_export($publicConfig, true) . ";\n";
+        file_put_contents(base_path('public/config.php'), $configContent);
+
+        $mercadopagoInfo->update([
+          'mobile_information' => json_encode($information),
+          'mobile_status' => $request->mercadopago_status
+        ]);
+      }
+    } else {
+
+      $mercadopagoInfo->update([
+        'information' => json_encode($information),
+        'status' => $request->mercadopago_status
+      ]);
+    }
 
     Session::flash('success', 'Updated Mercadopago Informaion Successfully');
 
@@ -277,16 +313,27 @@ public function index()
     $information['key'] = $request->mollie_key;
 
     $mollieInfo = OnlineGateway::where('keyword', 'mollie')->first();
-
-    $mollieInfo->update([
-      'information' => json_encode($information),
-      'status' => $request->mollie_status
-    ]);
-
-    $array = ['MOLLIE_KEY' => $request->mollie_key];
-
-    setEnvironmentValue($array);
-    Artisan::call('config:clear');
+    if (isset($request->is_mobile) && $request->is_mobile == 1) {
+      $publicConfig =  base_path('public/config.php');
+      if (file_exists($publicConfig)) {
+        $publicConfig = include base_path('public/config.php');
+        $publicConfig['MOLLIE_API_KEY'] = $request->mollie_key;
+        $configContent = "<?php\n\nreturn " . var_export($publicConfig, true) . ";\n";
+        file_put_contents(base_path('public/config.php'), $configContent);
+        $mollieInfo->update([
+          'mobile_information' => json_encode($information),
+          'mobile_status' => $request->mollie_status
+        ]);
+      }
+    } else {
+      $mollieInfo->update([
+        'information' => json_encode($information),
+        'status' => $request->mollie_status
+      ]);
+      $array = ['MOLLIE_KEY' => $request->mollie_key];
+      setEnvironmentValue($array);
+      Artisan::call('config:clear');
+    }
 
     Session::flash('success', 'Updated Mollie Informaion Successfully');
 
@@ -312,18 +359,34 @@ public function index()
 
     $stripeInfo = OnlineGateway::where('keyword', 'stripe')->first();
 
-    $stripeInfo->update([
-      'information' => json_encode($information),
-      'status' => $request->stripe_status
-    ]);
 
-    $array = [
-      'STRIPE_KEY' => $request->stripe_key,
-      'STRIPE_SECRET' => $request->stripe_secret
-    ];
 
-    setEnvironmentValue($array);
-    Artisan::call('config:clear');
+    if (isset($request->is_mobile) && $request->is_mobile == 1) {
+      $publicConfig =  base_path('public/config.php');
+      if (file_exists($publicConfig)) {
+        $publicConfig = include base_path('public/config.php');
+        $publicConfig['STRIPE_SECRET_KEY'] = $request->stripe_secret;
+        $configContent = "<?php\n\nreturn " . var_export($publicConfig, true) . ";\n";
+        file_put_contents(base_path('public/config.php'), $configContent);
+        $stripeInfo->update([
+          'mobile_information' => json_encode($information),
+          'mobile_status' => $request->stripe_status
+        ]);
+      }
+    } else {
+      $stripeInfo->update([
+        'information' => json_encode($information),
+        'status' => $request->stripe_status
+      ]);
+
+      $array = [
+        'STRIPE_KEY' => $request->stripe_key,
+        'STRIPE_SECRET' => $request->stripe_secret
+      ];
+
+      setEnvironmentValue($array);
+      Artisan::call('config:clear');
+    }
 
     Session::flash('success', 'Updated Stripe Informaion Successfully');
 
@@ -395,10 +458,28 @@ public function index()
 
     $data = OnlineGateway::where('keyword', 'midtrans')->first();
 
-    $data->update([
-      'information' => json_encode($information),
-      'status' => $request->status
-    ]);
+    if (isset($request->is_mobile) && $request->is_mobile == 1) {
+    $publicConfig =  base_path('public/config.php');
+    if (file_exists($publicConfig)) {
+      $publicConfig = include base_path('public/config.php');
+      $publicConfig['MIDTRANS_SERVER_KEY'] = $request->server_key;
+      $publicConfig['MIDTRANS_BASE'] = $request->is_production == 1 ? 'https://app.sandbox.midtrans.com/snap/v1/transactions' :
+        'https://app.midtrans.com/snap/v1/transactions';
+      $configContent = "<?php\n\nreturn " . var_export($publicConfig, true) . ";\n";
+      file_put_contents(base_path('public/config.php'), $configContent);
+
+      $data->update([
+        'mobile_information' => json_encode($information),
+        'mobile_status' => $request->status
+      ]);
+    }}
+    else{
+      $data->update([
+        'information' => json_encode($information),
+        'status' => $request->status
+      ]);
+
+    }
 
     Session::flash('success', 'Updated Midtrans Information Successfully');
 
@@ -458,13 +539,32 @@ public function index()
     $information['category_code'] = $request->category_code;
 
     $data = OnlineGateway::where('keyword', 'toyyibpay')->first();
+    if (isset($request->is_mobile) && $request->is_mobile == 1) {
 
-    $data->update([
-      'information' => json_encode($information),
-      'status' => $request->status
-    ]);
+      $publicConfig =  base_path('public/config.php');
+      if (file_exists($publicConfig)) {
+        $publicConfig = include base_path('public/config.php');
+        $publicConfig['TOYYIBPAY_SECRET_KEY'] = $request->secret_key;
+        $publicConfig['TOYYIBPAY_CATEGORY_CODE'] = $request->category_code;
+        $publicConfig['TOYYIBPAY_BASE'] = $request->sandbox_status == 1 ? 'https://dev.toyyibpay.com' : 'https://www.toyyibpay.com';
+        $configContent = "<?php\n\nreturn " . var_export($publicConfig, true) . ";\n";
+        file_put_contents(base_path('public/config.php'), $configContent);
+      }
 
+      $data->update([
+        'mobile_information' => json_encode($information),
+        'mobile_status' => $request->status
+      ]);
+
+    }else{
+
+      $data->update([
+        'information' => json_encode($information),
+        'status' => $request->status
+      ]);
+    }
     Session::flash('success', 'Updated Toyyibpay Information Successfully');
+
 
     return redirect()->back();
   }
@@ -494,7 +594,6 @@ public function index()
       'information' => json_encode($information),
       'status' => $request->status
     ]);
-
     Session::flash('success', 'Updated Iyzico Information Successfully');
 
     return redirect()->back();
@@ -522,10 +621,30 @@ public function index()
 
     $data = OnlineGateway::where('keyword', 'phonepe')->first();
 
-    $data->update([
-      'information' => json_encode($information),
-      'status' => $request->status
-    ]);
+    if (isset($request->is_mobile) && $request->is_mobile == 1) {
+      $publicConfig =  base_path('public/config.php');
+      if (file_exists($publicConfig)) {
+        $publicConfig = include base_path('public/config.php');
+        $publicConfig['PHONEPE_MERCHANT_ID'] = $request->merchant_id;
+        $publicConfig['PHONEPE_SALT_KEY'] = $request->salt_key;
+        $publicConfig['PHONEPE_SALT_INDEX'] = $request->salt_index;
+        $publicConfig['PHONEPE_BASE'] = $request->sandbox_status == 1 ? 'https://api-preprod.phonepe.com/apis/pg-sandbox' : 'https://api.phonepe.com/apis/hermes';
+        $configContent = "<?php\n\nreturn " . var_export($publicConfig, true) . ";\n";
+        file_put_contents(base_path('public/config.php'), $configContent);
+
+        $data->update([
+          'mobile_information' => json_encode($information),
+          'mobile_status' => $request->status
+        ]);
+      }
+
+    }else{
+      $data->update([
+        'information' => json_encode($information),
+        'status' => $request->status
+      ]);
+    }
+
 
     Session::flash('success', 'Updated Phonepe Information Successfully');
 
@@ -573,18 +692,29 @@ public function index()
     $information['secret_key'] = $request->secret_key;
 
     $data = OnlineGateway::where('keyword', 'xendit')->first();
-
-    $data->update([
-      'information' => json_encode($information),
-      'status' => $request->status
-    ]);
-
-    $array = [
-      'XENDIT_SECRET_KEY' => $request->secret_key,
-    ];
-
-    setEnvironmentValue($array);
-    Artisan::call('config:clear');
+    if (isset($request->is_mobile) && $request->is_mobile == 1) {
+      $publicConfig =  base_path('public/config.php');
+      if (file_exists($publicConfig)) {
+        $publicConfig = include base_path('public/config.php');
+        $publicConfig['XENDIT_SECRET_KEY'] = $request->secret_key;
+        $configContent = "<?php\n\nreturn " . var_export($publicConfig, true) . ";\n";
+        file_put_contents(base_path('public/config.php'), $configContent);
+        $data->update([
+          'mobile_information' => json_encode($information),
+          'mobile_status' => $request->status
+        ]);
+      }
+    }else{
+      $data->update([
+        'information' => json_encode($information),
+        'status' => $request->status
+      ]);
+      $array = [
+        'XENDIT_SECRET_KEY' => $request->secret_key,
+      ];
+      setEnvironmentValue($array);
+      Artisan::call('config:clear');
+    }
 
     Session::flash('success', 'Updated Xendit Information Successfully');
 
@@ -611,19 +741,38 @@ public function index()
 
     $data = OnlineGateway::where('keyword', 'myfatoorah')->first();
 
-    $data->update([
-      'information' => json_encode($information),
-      'status' => $request->status
-    ]);
+    if (isset($request->is_mobile) && $request->is_mobile == 1) {
 
-    $array = [
-      'MYFATOORAH_TOKEN' => $request->token,
-      'MYFATOORAH_CALLBACK_URL' => route('myfatoorah_callback'),
-      'MYFATOORAH_ERROR_URL' => route('myfatoorah_cancel'),
-    ];
+      $publicConfig =  base_path('public/config.php');
+      if (file_exists($publicConfig)) {
+        $publicConfig = include base_path('public/config.php');
+        $publicConfig['MYFATOORAH_API_KEY'] = $request->token;
+        $publicConfig['MYFATOORAH_BASE'] = $request->sandbox_status == 1
+          ? 'https://apitest.myfatoorah.com'
+          : 'https://api.myfatoorah.com';
+        $configContent = "<?php\n\nreturn " . var_export($publicConfig, true) . ";\n";
+        file_put_contents(base_path('public/config.php'), $configContent);
 
-    setEnvironmentValue($array);
-    Artisan::call('config:clear');
+        $data->update([
+          'mobile_information' => json_encode($information),
+          'mobile_status' => $request->status
+        ]);
+      }
+    }else{
+
+      $data->update([
+        'information' => json_encode($information),
+        'status' => $request->status
+      ]);
+      $array = [
+        'MYFATOORAH_TOKEN' => $request->token,
+        'MYFATOORAH_CALLBACK_URL' => route('myfatoorah_callback'),
+        'MYFATOORAH_ERROR_URL' => route('myfatoorah_cancel'),
+      ];
+      setEnvironmentValue($array);
+      Artisan::call('config:clear');
+
+    }
 
     Session::flash('success', 'Updated Xendit Information Successfully');
 
@@ -658,4 +807,87 @@ public function index()
 
     return redirect()->back();
   }
+  /**
+   * update monnify info
+   */
+  public function updateMonify(Request $request)
+  {
+    $data = OnlineGateway::where('keyword', 'monnify')->first();
+
+    $information = [
+      "sandbox_status" => $request->sandbox_status,
+      "api_key" => $request->api_key,
+      "secret_key" => $request->secret_key,
+      "wallet_account_number" => $request->wallet_account_number
+    ];
+
+
+    if (isset($request->is_mobile) && $request->is_mobile == 1) {
+      //update public/config file for monnify info(used it only for apps)
+      $publicConfig = include base_path('public/config.php');
+      $publicConfig['MONNIFY_API_KEY'] = $request->api_key;
+      $publicConfig['MONNIFY_SECRET_KEY'] = $request->secret_key;
+      $publicConfig['MONNIFY_CONTRACT_CODE'] = $request->wallet_account_number;
+      $publicConfig['MONNIFY_BASE'] = $request->sandbox_status == 1 ? 'https://sandbox.monnify.com' : 'https://api.monnify.com';
+      $configContent = "<?php\n\nreturn " . var_export($publicConfig, true) . ";\n";
+      file_put_contents(base_path('public/config.php'), $configContent);
+
+      $data->mobile_status = $request->status;
+      $data->mobile_information = json_encode($information);
+      $data->save();
+    } else {
+      $data->status = $request->status;
+      $data->information = json_encode($information);
+      $data->save();
+    }
+
+    session()->flash('success', __('Updated Successfully'));
+    return back();
+  }
+
+  /**
+   * update nowpayments info
+   */
+  public function updateNowPayments(Request $request)
+  {
+    $rules = [
+      'status' => 'required',
+      'api_key' => 'required'
+    ];
+
+    $validator = Validator::make($request->all(), $rules);
+
+    if ($validator->fails()) {
+      return redirect()->back()->withErrors($validator->errors());
+    }
+
+    $nowPaymentsInfo = OnlineGateway::where('keyword', 'now_payments')->first();
+    $information['api_key'] = $request->api_key;
+
+
+    if (isset($request->is_mobile) && $request->is_mobile == 1) {
+
+      //update public/config file for now_payments info(used it only for apps)
+      $publicConfig = include base_path('public/config.php');
+      $publicConfig['NOWPAYMENTS_API_KEY'] = $request->api_key;
+      $configContent = "<?php\n\nreturn " . var_export($publicConfig, true) . ";\n";
+      file_put_contents(base_path('public/config.php'), $configContent);
+
+
+      $nowPaymentsInfo->update([
+        'mobile_information' => json_encode($information),
+        'mobile_status' => $request->status
+      ]);
+    } else {
+      $nowPaymentsInfo->update([
+        'information' => json_encode($information),
+        'status' => $request->status
+      ]);
+    }
+
+
+    session()->flash('success', __("NowPayments's information updated successfully!"));
+    return redirect()->back();
+  }
+
 }

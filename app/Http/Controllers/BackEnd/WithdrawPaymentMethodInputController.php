@@ -23,6 +23,7 @@ class WithdrawPaymentMethodInputController extends Controller
   //store
   public function store(Request $request)
   {
+
     $inname = make_input_name($request->label);
     $inputs = WithdrawMethodInput::where('withdraw_payment_method_id', $request->withdraw_payment_method_id)->get();
     $maxOrder = WithdrawMethodInput::where('withdraw_payment_method_id', $request->withdraw_payment_method_id)->max('order_number');
@@ -50,9 +51,12 @@ class WithdrawPaymentMethodInputController extends Controller
 
     $validator = Validator::make($request->all(), $rules, $messages);
     if ($validator->fails()) {
-      $errmsgs = $validator->getMessageBag()->add('error', 'true');
-      return response()->json($validator->errors());
+      return response()->json([
+        'errors' => $validator->getMessageBag()
+      ], 400);
     }
+
+
 
     $input = new WithdrawMethodInput;
     $input->withdraw_payment_method_id = $request->withdraw_payment_method_id;
@@ -133,8 +137,9 @@ class WithdrawPaymentMethodInputController extends Controller
 
     $validator = Validator::make($request->all(), $rules, $messages);
     if ($validator->fails()) {
-      $errmsgs = $validator->getMessageBag()->add('error', 'true');
-      return response()->json($validator->errors());
+      return response()->json([
+        'errors' => $validator->getMessageBag()
+      ], 400);
     }
 
 

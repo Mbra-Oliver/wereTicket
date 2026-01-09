@@ -266,9 +266,8 @@ class EventBookingController extends Controller
     $paymentMethod = $request->payment_method;
 
     if (!empty($fromDate) && !empty($toDate)) {
-      $bookings = Booking::join('event_contents', 'event_contents.event_id', 'bookings.event_id')
-        ->join('customers', 'customers.id', 'bookings.customer_id')
-        ->join('events', 'events.id', 'bookings.event_id')
+      $bookings = Booking::join('events', 'bookings.event_id', 'events.id')
+        ->join('event_contents', 'event_contents.event_id', 'bookings.event_id')
         ->where('event_contents.language_id', $language->id)
         ->where('events.organizer_id', Auth::guard('organizer')->user()->id)
         ->when($fromDate, function ($query, $fromDate) {
@@ -280,7 +279,7 @@ class EventBookingController extends Controller
         })->when($paymentStatus, function ($query, $paymentStatus) {
           return $query->where('bookings.paymentStatus', '=', $paymentStatus);
         })
-        ->select('event_contents.title', 'customers.fname as customerfname', 'customers.lname as customerlname', 'event_contents.slug', 'bookings.*')
+        ->select('event_contents.title', 'event_contents.slug', 'bookings.*')
         ->orderByDesc('id');
 
       Session::put('booking_report', $bookings->get());

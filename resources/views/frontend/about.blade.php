@@ -20,7 +20,7 @@
     data-bg="{{ asset('assets/admin/img/' . $basicInfo->breadcrumb) }}">
     <div class="container">
       <div class="banner-inner">
-        <h1 class="page-title">{{ $pageHeading ? $pageHeading->about_page_title : '' }}</h1>
+        <h2 class="page-title">{{ $pageHeading ? $pageHeading->about_page_title : '' }}</h2>
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('index') }}">{{ __('Home') }}</a></li>

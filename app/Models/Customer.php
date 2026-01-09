@@ -11,11 +11,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Laravel\Sanctum\HasApiTokens;
 
 
 class Customer extends Model implements AuthenticatableContract
 {
-  use HasFactory, Authenticatable;
+  use HasApiTokens, HasFactory, Authenticatable;
   protected $fillable = [
     'provider',
     'provider_id',
@@ -46,14 +47,6 @@ class Customer extends Model implements AuthenticatableContract
 
   protected $casts = [
     'email_verified_at' => 'datetime',
-  ];
-  /**
-   * The accessors to append to the model's array form.
-   *
-   * @var array
-   */
-  protected $appends = [
-    'profile_photo_url',
   ];
 
   //bookings

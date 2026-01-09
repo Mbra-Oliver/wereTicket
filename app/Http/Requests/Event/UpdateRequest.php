@@ -2,11 +2,12 @@
 
 namespace App\Http\Requests\Event;
 
-use Illuminate\Foundation\Http\FormRequest;
-use App\Models\Event\EventContent;
-use App\Models\Event\EventImage;
 use App\Models\Language;
+use App\Models\Event\EventImage;
 use App\Rules\ImageMimeTypeRule;
+use App\Models\Event\EventContent;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateRequest extends FormRequest
 {
@@ -29,10 +30,20 @@ class UpdateRequest extends FormRequest
     $request = $this->request->all();
     $event_galleries = EventImage::where('event_id', $this->event_id)->get()->count();
     $ruleArray = [
-      'thumbnail' => $this->hasFile('thumbnail') ? [new ImageMimeTypeRule(), 'dimensions:width=320,height=230'] : '',
       'gallery_images' => $event_galleries == 0 ? 'numeric|min:1' : '',
       'status' => 'required',
       'is_featured' => 'required',
+      'thumbnail' => $this->hasFile('thumbnail') ? [
+        new ImageMimeTypeRule(),
+        function ($attribute, $value, $fail) {
+          if ($value && is_file($value->getPathname())) {
+            [$width, $height] = getimagesize($value->getPathname());
+            if ($width != 320 || $height != 230) {
+              $fail('The thumbnail image dimensions must be exactly 320x230 pixels.');
+            }
+          }
+        }
+      ] : [],
     ];
 
     if ($this->date_type == 'single') {
@@ -81,10 +92,11 @@ class UpdateRequest extends FormRequest
       $ruleArray['longitude'] = 'required_if:event_type,venue';
     }
 
+    $bs = DB::table('basic_settings')
+      ->select('event_country_status', 'event_state_status')
+      ->first();
     $languages = Language::all();
-
     $id = $this->route('id');
-
     foreach ($languages as $language) {
       $slug = createSlug($request[$language->code . '_title']);
       $ruleArray[$language->code . '_title'] = [
@@ -100,8 +112,13 @@ class UpdateRequest extends FormRequest
         }
       ];
       $ruleArray[$language->code . '_address'] = 'required_if:event_type,venue';
-      $ruleArray[$language->code . '_country'] = 'required_if:event_type,venue';
-      $ruleArray[$language->code . '_city'] = 'required_if:event_type,venue';
+
+      if ($bs->event_country_status == 1) {
+        $ruleArray[$language->code . '_country'] = 'required_if:event_type,venue';
+      }
+      if ($bs->event_state_status == 1) {
+        $ruleArray[$language->code . '_state'] = 'required_if:event_type,venue';
+      }
 
       $ruleArray[$language->code . '_title'] = 'required';
       $ruleArray[$language->code . '_category_id'] = 'required';
@@ -116,21 +133,18 @@ class UpdateRequest extends FormRequest
     $messageArray = [];
 
     $languages = Language::all();
-
     foreach ($languages as $language) {
-      $messageArray[$language->code . '_title.required'] = 'The title field is required for ' . $language->name . ' language.';
+      $code = $language->code;
+      $langNameText = $language->name . ' language.';
+      $messageArray[$code . '_title.required'] = 'The title field is required for ' . $langNameText;
 
-      $messageArray[$language->code . '_address.required'] = 'The address field is required for ' . $language->name . ' language.';
-      $messageArray[$language->code . '_country.required'] = 'The Country field is required for ' . $language->name . ' language.';
-      $messageArray[$language->code . '_city.required'] = 'The City field is required for ' . $language->name . ' language.';
+      $messageArray[$code . '_address.required_if'] = 'The address field is required for ' . $langNameText;
+      $messageArray[$code . '_country.required_if'] = 'The country field is required for ' . $langNameText;
+      $messageArray[$code . '_city.required_if'] = 'The city field is required for ' . $langNameText;
+      $messageArray[$code . '_state.required_if'] = 'The state field is required for ' . $langNameText;
 
-      $messageArray[$language->code . '_address.required_if'] = 'The Address field is required for ' . $language->name . ' language.';
-      $messageArray[$language->code . '_country.required_if'] = 'The Country field is required for ' . $language->name . ' language.';
-      $messageArray[$language->code . '_city.required_if'] = 'The City field is required for ' . $language->name . ' language.';
-
-      $messageArray[$language->code . '_category_id.required'] = 'The category field is required for ' . $language->name . ' language.';
-
-      $messageArray[$language->code . '_description.min'] = 'The description must be at least 30 characters for ' . $language->name . ' language.';
+      $messageArray[$code . '_category_id.required'] = 'The category field is required for ' . $langNameText;
+      $messageArray[$code . '_description.min'] = 'The description must be at least 30 characters for ' . $langNameText;
     }
 
     $messageArray['m_start_date.required'] = 'The start date feild is required.!';

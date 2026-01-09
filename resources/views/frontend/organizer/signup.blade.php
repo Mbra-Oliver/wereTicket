@@ -49,6 +49,14 @@
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-lg-8">
+
+          @if (Session::has('success'))
+            <div class="alert alert-success">{{ Session::get('success') }}</div>
+          @endif
+          @if (Session::has('alert'))
+            <div class="alert alert-danger">{{ Session::get('alert') }}</div>
+          @endif
+
           <form id="login-form" name="login_form" class="login-form" action="{{ route('organizer.create') }}"
             method="POST">
             @csrf

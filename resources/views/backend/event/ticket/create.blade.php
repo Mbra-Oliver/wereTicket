@@ -78,7 +78,7 @@
 
         <div class="card-body">
           <div class="row">
-            <div class="col-lg-10 mx-auto">
+            <div class="col-lg-8 mx-auto">
               <div class="alert alert-danger pb-1 dis-none" id="eventErrors">
                 <button type="button" class="close" data-dismiss="alert">×</button>
                 <ul></ul>
@@ -491,6 +491,7 @@
     let BaseCTxt = "{{ $getCurrencyInfo->base_currency_text }}";
     var names = "{!! $names !!}";
     var guest_checkout_status = "{{ $websiteInfo->event_guest_checkout_status }}";
+    var edit_event_page = 0;
   </script>
   <script type="text/javascript" src="{{ asset('assets/admin/js/admin-partial.js') }}"></script>
 @endsection
@@ -498,7 +499,7 @@
 @section('variables')
   <script>
     "use strict";
-    var storeUrl = "{{ route('admin.event.imagesstore') }}";
-    var removeUrl = "{{ route('admin.event.imagermv') }}";
+    var storeUrl = "{{ route('organizer.event.imagesstore') }}";
+    var removeUrl = "{{ route('organizer.event.imagermv') }}";
   </script>
 @endsection

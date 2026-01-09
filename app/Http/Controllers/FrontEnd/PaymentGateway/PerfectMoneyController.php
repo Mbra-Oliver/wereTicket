@@ -137,18 +137,18 @@ class PerfectMoneyController extends Controller
         $id = Session::get('payment_id');
         if ($request->PAYEE_ACCOUNT == $perfectMoneyInfo['perfect_money_wallet_id'] && $unit == $currencyInfo->base_currency_text && $track == $id && $amo == round($final_amount, 2)) {
             //success payment and save data into database
-            $booking = new BookingController();
+            $enrol = new BookingController();
 
             // store the course enrolment information in database
-            $bookingInfo = $booking->storeData($arrData);
+            $bookingInfo = $enrol->storeData($arrData);
 
             $ticket = DB::table('basic_settings')->select('how_ticket_will_be_send')->first();
 
             if ($ticket->how_ticket_will_be_send == 'instant') {
                 // generate an invoice in pdf format
-                $invoice = $bookingInfo->generateInvoice($bookingInfo, $bookingInfo->event_id);
+                $invoice = $enrol->generateInvoice($bookingInfo, $bookingInfo->event_id);
 
-                //unlink qr code 
+                //unlink qr code
                 if (
                     $bookingInfo->variation != null
                 ) {
@@ -170,7 +170,7 @@ class PerfectMoneyController extends Controller
                 $bookingInfo->save();
 
                 // send a mail to the customer with the invoice
-                $bookingInfo->sendMail($bookingInfo);
+                $enrol->sendMail($bookingInfo);
             } else {
                 BookingInvoiceJob::dispatch($bookingInfo->id)->delay(now()->addSeconds(10));
             }

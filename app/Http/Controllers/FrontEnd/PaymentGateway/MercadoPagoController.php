@@ -180,10 +180,8 @@ class MercadoPagoController extends Controller
         // generate an invoice in pdf format
         $invoice = $enrol->generateInvoice($bookingInfo, $bookingInfo->event_id);
 
-        //unlink qr code 
-        if (
-          $bookingInfo->variation != null
-        ) {
+        //unlink qr code
+        if ($bookingInfo->variation != null) {
           //generate qr code for without wise ticket
           $variations = json_decode($bookingInfo->variation, true);
           foreach ($variations as $variation) {

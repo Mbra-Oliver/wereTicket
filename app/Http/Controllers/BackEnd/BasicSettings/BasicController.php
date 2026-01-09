@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers\BackEnd\BasicSettings;
 
-use App\Http\Controllers\Controller;
-use App\Http\Helpers\UploadFile;
-use App\Http\Requests\CurrencyRequest;
-use App\Http\Requests\MailFromAdminRequest;
 use App\Models\Timezone;
-use App\Rules\ImageMimeTypeRule;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Config;
+use App\Http\Helpers\UploadFile;
+use App\Rules\ImageMimeTypeRule;
 use Illuminate\Support\Facades\DB;
+use Mews\Purifier\Facades\Purifier;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
+use App\Http\Requests\CurrencyRequest;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
-use Mews\Purifier\Facades\Purifier;
+use App\Http\Requests\MailFromAdminRequest;
 
 class BasicController extends Controller
 {
@@ -273,7 +273,7 @@ class BasicController extends Controller
   public function plugins()
   {
     $data = DB::table('basic_settings')
-      ->select('disqus_status', 'disqus_short_name', 'google_recaptcha_status', 'google_recaptcha_site_key', 'google_recaptcha_secret_key', 'whatsapp_status', 'whatsapp_number', 'whatsapp_header_title', 'whatsapp_popup_status', 'whatsapp_popup_message', 'facebook_login_status', 'facebook_app_id', 'facebook_app_secret', 'google_login_status', 'google_client_id', 'google_client_secret')
+      ->select('disqus_status', 'google_map_status', 'google_map_api_key', 'google_map_radius', 'disqus_short_name', 'google_recaptcha_status', 'google_recaptcha_site_key', 'google_recaptcha_secret_key', 'whatsapp_status', 'whatsapp_number', 'whatsapp_header_title', 'whatsapp_popup_status', 'whatsapp_popup_message', 'facebook_login_status', 'facebook_app_id', 'facebook_app_secret', 'google_login_status', 'google_client_id', 'google_client_secret')
       ->first();
 
     return view('backend.basic-settings.plugins', ['data' => $data]);
@@ -462,6 +462,39 @@ class BasicController extends Controller
 
     $request->session()->flash('success', 'Updated Successfully');
 
+    return redirect()->back();
+  }
+
+  public function updategeo(Request $request)
+  {
+    $rules = [
+      'google_map_status' => 'required',
+      'google_map_api_key' => 'required',
+      'google_map_radius' => 'required'
+    ];
+
+    $messages = [
+      'google_map_status.required' => 'The login status field is required.',
+      'google_map_api_key.required' => 'The client id field is required.',
+      'google_map_radius.required' => 'The client secret field is required.'
+    ];
+
+    $validator = Validator::make($request->all(), $rules, $messages);
+
+    if ($validator->fails()) {
+      return redirect()->back()->withErrors($validator->errors());
+    }
+
+    DB::table('basic_settings')->updateOrInsert(
+      ['uniqid' => 12345],
+      [
+        'google_map_status' => $request->google_map_status,
+        'google_map_api_key' => $request->google_map_api_key,
+        'google_map_radius' => $request->google_map_radius
+      ]
+    );
+
+    session()->flash('success', 'Updated Successfully');
     return redirect()->back();
   }
 
@@ -932,11 +965,8 @@ class BasicController extends Controller
   public function general_settings()
   {
     $data = [];
-
     $data['data'] = DB::table('basic_settings')->first();
-
     $data['time_zones'] = Timezone::orderBy('country_code', 'asc')->get();
-
     return view('backend.basic-settings.general-settings', $data);
   }
   //update general settings
@@ -993,7 +1023,8 @@ class BasicController extends Controller
       $iconName = $data->favicon;
     }
 
-    //update or insert data to basic settigs table 
+
+    //update or insert data to basic settigs table
     DB::table('basic_settings')->updateOrInsert(
       ['uniqid' => 12345],
       [
@@ -1009,8 +1040,7 @@ class BasicController extends Controller
         'base_currency_symbol_position' => $request->base_currency_symbol_position,
         'base_currency_text' => $request->base_currency_text,
         'base_currency_text_position' => $request->base_currency_text_position,
-        'base_currency_rate' => $request->base_currency_rate,
-
+        'base_currency_rate' => $request->base_currency_rate
       ]
     );
 
@@ -1025,4 +1055,5 @@ class BasicController extends Controller
 
     return redirect()->back();
   }
+
 }

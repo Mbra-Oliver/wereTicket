@@ -47,15 +47,17 @@
         </li>
 
         <li
-          class="nav-item 
-          @if (request()->routeIs('organizer.event_management.event')) active 
-          @elseif (request()->routeIs('choose-event-type')) active 
-          @elseif (request()->routeIs('organizer.event_management.ticket_setting')) active 
-          @elseif (request()->routeIs('organizer.add.event.event')) active 
-          @elseif (request()->routeIs('organizer.event_management.edit_event')) active 
+          class="nav-item
+          @if (request()->routeIs('organizer.event_management.event')) active
+          @elseif (request()->routeIs('choose-event-type')) active
+          @elseif (request()->routeIs('organizer.event_management.ticket_setting')) active
+          @elseif (request()->routeIs('organizer.add.event.event')) active
+          @elseif (request()->routeIs('organizer.event_management.edit_event')) active
           @elseif (request()->routeIs('organizer.event.ticket')) active
-              @elseif (request()->routeIs('organizer.event.add.ticket')) active
-              @elseif (request()->routeIs('organizer.event.edit.ticket')) active @endif">
+          @elseif (request()->routeIs('organizer.event.add.ticket')) active
+          @elseif (request()->routeIs('organizer.event.edit.ticket')) active
+          @elseif (request()->routeIs('organizer.event_management.seat_mapping')) active
+          @endif">
           <a data-toggle="collapse" href="#course">
             <i class="fal fa-book"></i>
             <p>{{ __('Event Management') }}</p>
@@ -65,20 +67,22 @@
           <div id="course"
             class="collapse
             @if (request()->routeIs('organizer.event_management.event')) show
-            @elseif (request()->routeIs('choose-event-type')) show 
-            @elseif (request()->routeIs('organizer.event_management.ticket_setting')) show 
-            @elseif (request()->routeIs('organizer.add.event.event')) show 
-            @elseif (request()->routeIs('organizer.event_management.edit_event')) show 
+            @elseif (request()->routeIs('choose-event-type')) show
+            @elseif (request()->routeIs('organizer.event_management.ticket_setting')) show
+            @elseif (request()->routeIs('organizer.add.event.event')) show
+            @elseif (request()->routeIs('organizer.event_management.edit_event')) show
             @elseif (request()->routeIs('organizer.event.ticket')) show
-              @elseif (request()->routeIs('organizer.event.add.ticket')) show
-              @elseif (request()->routeIs('organizer.event.edit.ticket')) show @endif">
+            @elseif (request()->routeIs('organizer.event.add.ticket')) show
+            @elseif (request()->routeIs('organizer.event.edit.ticket')) show
+            @elseif (request()->routeIs('organizer.event_management.seat_mapping')) show
+            @endif">
             <ul class="nav nav-collapse">
 
               <li
                 class="
 
               @if (request()->routeIs('choose-event-type')) active
-              @elseif (request()->routeIs('organizer.add.event.event') && request()->input('type') == 'online') active 
+              @elseif (request()->routeIs('organizer.add.event.event') && request()->input('type') == 'online') active
               @elseif (request()->routeIs('organizer.add.event.event') && request()->input('type') == 'venue') active @endif
               ">
                 <a href="{{ route('choose-event-type', ['language' => $defaultLang->code]) }}">
@@ -88,11 +92,13 @@
 
               <li
                 class="@if (request()->routeIs('organizer.event_management.event') && request()->input('event_type') == '') active
-                  @elseif (request()->routeIs('organizer.event_management.edit_event') && request()->input('event_type') == '') active 
-                  @elseif (request()->routeIs('organizer.event_management.ticket_setting')) active 
+                  @elseif (request()->routeIs('organizer.event_management.edit_event') && request()->input('event_type') == '') active
+                  @elseif (request()->routeIs('organizer.event_management.ticket_setting')) active
                   @elseif (request()->routeIs('organizer.event.ticket') && request()->input('event_type') == '') active
               @elseif (request()->routeIs('organizer.event.add.ticket') && request()->input('event_type') == '') active
-              @elseif (request()->routeIs('organizer.event.edit.ticket') && request()->input('event_type') == '') active @endif">
+              @elseif (request()->routeIs('organizer.event.edit.ticket') && request()->input('event_type') == '') active
+              @elseif (request()->routeIs('organizer.event_management.seat_mapping') && request()->input('event_type') == '') active
+              @endif">
                 <a href="{{ route('organizer.event_management.event', ['language' => $defaultLang->code]) }}">
                   <span class="sub-item">{{ __('All Events') }}</span>
                 </a>
@@ -100,8 +106,8 @@
 
               <li
                 class="
-              @if (request()->routeIs('organizer.event_management.event') && request()->input('event_type') == 'venue') active 
-              @elseif (request()->routeIs('organizer.event.ticket') && request()->input('event_type') == 'venue') active 
+              @if (request()->routeIs('organizer.event_management.event') && request()->input('event_type') == 'venue') active
+              @elseif (request()->routeIs('organizer.event.ticket') && request()->input('event_type') == 'venue') active
               @elseif (request()->routeIs('organizer.event.add.ticket') && request()->input('event_type') == 'venue') active
               @elseif (request()->routeIs('organizer.event.edit.ticket') && request()->input('event_type') == 'venue') active @endif">
                 <a
@@ -142,7 +148,7 @@
             <ul class="nav nav-collapse">
               <li
                 class="
-              @if (request()->routeIs('organizer.event.booking') && empty(request()->input('status'))) active  
+              @if (request()->routeIs('organizer.event.booking') && empty(request()->input('status'))) active
               @elseif (request()->routeIs('organizer.event_booking.details')) active @endif">
                 <a href="{{ route('organizer.event.booking') }}">
                   <span class="sub-item">{{ __('All Bookings') }}</span>
@@ -179,8 +185,8 @@
           </div>
         </li>
         <li
-          class="nav-item 
-        @if (request()->routeIs('organizer.withdraw')) active 
+          class="nav-item
+        @if (request()->routeIs('organizer.withdraw')) active
         @elseif (request()->routeIs('organizer.withdraw.create')) active @endif">
           <a href="{{ route('organizer.withdraw', ['language' => $defaultLang->code]) }}">
             <i class="fal fa-donate"></i>

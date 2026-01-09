@@ -31,8 +31,16 @@ class WithdrawController extends Controller
   //delete
   public function delete(Request $request)
   {
-    $delete = Withdraw::where('id', $request->id)->first();
-    $delete->delete();
+    $withdraw = Withdraw::where('id', $request->id)->first();
+
+   if($withdraw->status == 0){
+      $organizer = $withdraw->organizer()->first();
+      $organizer->amount = ($organizer->amount + ($withdraw->amount));
+      $organizer->save();
+   }
+
+
+    $withdraw->delete();
     return redirect()->back()->with('success', 'Deleted Successfully');
   }
 

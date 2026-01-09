@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\FrontEnd;
 
+use App\Http\Controllers\BackEnd\Event\TicketController;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FrontEnd\PaymentGateway\MyFatoorahController;
 use App\Http\Controllers\FrontEnd\PaymentGateway\XenditController;
@@ -12,6 +13,7 @@ use App\Models\Event;
 use App\Models\Event\Booking;
 use App\Models\Event\EventCategory;
 use App\Models\Event\EventContent;
+use App\Models\Event\Ticket;
 use App\Models\Footer\FooterContent;
 use App\Models\Footer\QuickLink;
 use App\Models\HomePage\AboutUsSection;
@@ -25,6 +27,8 @@ use App\Models\HomePage\PartnerSection;
 use App\Models\HomePage\Section;
 use App\Models\HomePage\Testimonial;
 use App\Models\HomePage\TestimonialSection;
+use App\Models\Language;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
@@ -38,6 +42,13 @@ class HomeController extends Controller
   }
   public function index()
   {
+    $tickets = Ticket::get();
+     $tController = new TicketController;
+    foreach($tickets as $tickets){
+      $tController->includeSlotSystemVariable($tickets->id);
+    }
+
+
     $language = $this->getLanguage();
 
     $queryResult['seoInfo'] = $language->seoInfo()->select('meta_keyword_home', 'meta_description_home')->first();
@@ -191,4 +202,33 @@ class HomeController extends Controller
   {
     return redirect()->route('index')->with(['alert-type' => 'error', 'message' => 'Payment failed']);
   }
+
+  public function testPDF(Request $request){
+
+    $bookingInfo = Booking::orderBy('id','desc')->first();
+    $fileName = $bookingInfo->booking_id . '.pdf';
+    $directory = public_path('assets/admin/file/invoices/');
+    @mkdir($directory, 0775, true);
+    $fileLocated = $directory . $fileName;
+
+    // get event title
+    $language =  Language::where('is_default', 1)->first();
+    $event = Event::find($bookingInfo->event_id);
+    $eventInfo = EventContent::where('event_id', $bookingInfo->event_id)->where('language_id', $language->id)->first();
+
+    $width = "50%";
+    $float = "right";
+    $mb = "35px";
+    $ml = "18px";
+
+    $pdf =  PDF::loadView('frontend.event.invoice', compact('bookingInfo', 'event', 'eventInfo', 'width', 'float', 'mb', 'ml', 'language'));
+    return $pdf->stream('invoice.pdf');
+
+    return view('frontend.event.invoice', compact('bookingInfo', 'event', 'eventInfo', 'width', 'float', 'mb', 'ml', 'language'));
+
+
+    PDF::loadView('frontend.event.invoice', compact('bookingInfo', 'event', 'eventInfo', 'width', 'float', 'mb', 'ml', 'language'))->save($fileLocated);
+
+  }
+
 }

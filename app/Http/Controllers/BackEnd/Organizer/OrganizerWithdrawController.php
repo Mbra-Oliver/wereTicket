@@ -24,6 +24,7 @@ class OrganizerWithdrawController extends Controller
     $collection = Withdraw::with('method')->where('organizer_id', Auth::guard('organizer')->user()->id)->orderby('id', 'desc')->get();
     return view('organizer.withdraw.index', compact('collection', 'currencyInfo'));
   }
+
   //create
   public function create()
   {
@@ -36,6 +37,7 @@ class OrganizerWithdrawController extends Controller
     $information['methods'] = $methods;
     return view('organizer.withdraw.create', $information);
   }
+
   //get_inputs
   public function get_inputs($id)
   {
@@ -43,6 +45,7 @@ class OrganizerWithdrawController extends Controller
 
     return $data;
   }
+  
   //balance_calculation
   public function balance_calculation($method, $amount)
   {
@@ -112,12 +115,11 @@ class OrganizerWithdrawController extends Controller
 
     $inputs = WithdrawMethodInput::where('withdraw_payment_method_id', $request->withdraw_method)->orderBy('order_number', 'asc')->get();
 
+    $fields = [];
     foreach ($inputs as $input) {
       if ($input->required == 1) {
         $rules["$input->name"] = 'required';
       }
-
-      $fields = [];
       foreach ($inputs as $key => $input) {
         $in_name = $input->name;
         if ($request["$in_name"]) {
@@ -166,7 +168,7 @@ class OrganizerWithdrawController extends Controller
     $save->feilds = json_encode($fields);
     $save->save();
 
-    //store data to transcation table 
+    //store data to transcation table
     $currencyInfo = $this->getCurrencyInfo();
     $transcation = Transaction::create([
       'transcation_id' => time(),
@@ -192,8 +194,13 @@ class OrganizerWithdrawController extends Controller
   //Delete
   public function Delete(Request $request)
   {
-    $delete = Withdraw::where([['organizer_id', Auth::guard('organizer')->user()->id], ['id', $request->id]])->first();
-    $delete->delete();
+    $withdraw = Withdraw::where([['organizer_id', Auth::guard('organizer')->user()->id], ['id', $request->id]])->first();
+    if ($withdraw->status == 0) {
+      $organizer = $withdraw->organizer()->first();
+      $organizer->amount = ($organizer->amount + ($withdraw->amount));
+      $organizer->save();
+    }
+    $withdraw->delete();
     return redirect()->back()->with('success', 'Withdraw Request Deleted Successfully!');
   }
 

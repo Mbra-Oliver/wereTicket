@@ -14,7 +14,7 @@ class OnlineGateway extends Model
    *
    * @var array
    */
-  protected $fillable = ['name', 'keyword', 'information', 'status'];
+  protected $fillable = ['name', 'keyword', 'information', 'status', 'mobile_status', 'mobile_information'];
 
   // as the timestamps is not needed, so make it false.
   public $timestamps = false;

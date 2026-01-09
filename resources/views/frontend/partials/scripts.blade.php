@@ -1,6 +1,7 @@
     <!-- Jquery -->
     <script>
       var baseUrl = "{{ url('/') }}";
+      var vap_pub_key = "{!! env('VAPID_PUBLIC_KEY') !!}";
     </script>
     <script src="{{ asset('assets/front/js/jquery.min.js') }}"></script>
     <!-- Popper -->
@@ -15,8 +16,14 @@
     <script src="{{ asset('assets/front/js/jquery.magnific-popup.min.js') }}"></script>
     <!-- Image Loaded -->
     <script src="{{ asset('assets/front/js/imagesloaded.pkgd.min.js') }}"></script>
+    <!-- Select2 JS -->
+    <script src="{{ asset('assets/front/js/select2.min.js') }}"></script>
+    {{-- nice-select --}}
+    <script src="{{ asset('assets/front/js/jquery.nice-select.min.js') }}"></script>
     <!-- Slick Slider -->
     <script src="{{ asset('assets/front/js/slick.min.js') }}"></script>
+    <!-- Swiper JS (UMD bundle) -->
+    <script src="{{ asset('assets/front/js/swiper-bundle.min.js') }}"></script>
     <!-- Main JS -->
     <script src="{{ asset('assets/front/js/vanilla-lazyload.min.js') }}"></script>
     <script src="{{ asset('assets/front/js/jquery-syotimer.min.js') }}"></script>
@@ -26,10 +33,18 @@
     <script src="{{ asset('assets/front/js/toastr.js') }}"></script>
     <script src="{{ asset('assets/front/js/cart.js') }}"></script>
     <script src="{{ asset('assets/front/js/pwa.js') }}" defer></script>
+    {{-- lodesh --}}
+    <script src="{{ asset('assets/front/js/lodash.min.js') }}"></script>
+
+    @if ($basicInfo->google_map_status == 1)
+      <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key={{ $basicInfo->google_map_api_key }}&libraries=places&callback=initMap">
+      </script>
+    @endif
+
 
     <script>
       @if (Session::has('message'))
-
         var type = "{{ Session::get('alert-type') }}";
         if (type) {
           type = type

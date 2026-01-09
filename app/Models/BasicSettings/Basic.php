@@ -70,5 +70,36 @@ class Basic extends Model
     'is_shop_rating',
     'shop_guest_checkout',
     'shop_tax',
+    'uniqid',
+    'facebook_login_status',
+    'facebook_app_id',
+    'facebook_app_secret',
+    'google_login_status',
+    'google_client_id',
+    'google_client_secret',
+    'preloader',
+    'commission',
+    'organizer_email_verification',
+    'organizer_admin_approval',
+    'admin_approval_notice',
+    'timezone',
+    'event_guest_checkout_status',
+    'how_ticket_will_be_send',
+    'google_map_status',
+    'google_map_radius',
+    'event_country_status',
+    'event_state_status',
+    'mobile_app_logo',
+    'mobile_favicon',
+    'mobile_primary_colour',
+    'mobile_breadcrumb_overlay_opacity',
+    'mobile_breadcrumb_overlay_colour',
+    'app_google_map_status'
   ];
+
+  // when user not set is work default
+  public function getTimezoneAttribute($value)
+  {
+    return $value ?? 'Asia/Dhaka';
+  }
 }

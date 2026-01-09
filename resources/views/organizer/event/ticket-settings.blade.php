@@ -151,10 +151,10 @@
 @section('variables')
   <script>
     "use strict";
-    var storeUrl = "{{ route('admin.event.imagesstore') }}";
-    var removeUrl = "{{ route('admin.event.imagermv') }}";
+    var storeUrl = "{{ route('organizer.event.imagesstore') }}";
+    var removeUrl = "{{ route('organizer.event.imagermv') }}";
 
-    var rmvdbUrl = "{{ route('admin.event.imgdbrmv') }}";
-    var loadImgs = "{{ route('admin.event.images', $event->id) }}";
+    var rmvdbUrl = "{{ route('organizer.event.imgdbrmv') }}";
+    var loadImgs = "{{ route('organizer.event.images', $event->id) }}";
   </script>
 @endsection

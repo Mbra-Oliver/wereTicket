@@ -30,4 +30,3 @@ Route::prefix('/scanner')->group(function () {
     });
   });
 });
-

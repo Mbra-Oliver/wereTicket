@@ -102,6 +102,7 @@ class OrganizerController extends Controller
         $events = Event::with(['tickets', 'information' => function ($query) use ($language) {
           return $query->where('language_id', $language->id);
         }])->where('organizer_id', $organizer->id)->get();
+        
       }
 
       $categories = EventCategory::where('status', 1)

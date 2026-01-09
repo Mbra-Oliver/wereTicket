@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
-use App\Models\Event\Booking;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Laravel\Sanctum\HasApiTokens;
 
 class Organizer extends Model implements AuthenticatableContract
 {
-  use HasFactory, Authenticatable;
+  use HasApiTokens, HasFactory, Authenticatable;
   protected $fillable = [
     'photo',
     'email',

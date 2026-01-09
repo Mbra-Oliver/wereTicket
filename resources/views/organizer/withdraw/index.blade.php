@@ -73,7 +73,7 @@
                     <th scope="col">{{ __('Method Name') }}</th>
                     <th scope="col">{{ __('Total Amount') }}</th>
                     <th scope="col">{{ __('Total Charge') }}</th>
-                    <th scope="col">{{ __('Total Payable Amount') }}</th>
+                    <th scope="col">{{ __('Total Receivable Amount') }}</th>
                     <th scope="col">{{ __('Status') }}</th>
                     <th scope="col">{{ __('Action') }}</th>
                   </tr>

@@ -20,37 +20,24 @@ if (!function_exists('convertUtf8')) {
 if (!function_exists('createSlug')) {
   function createSlug($string)
   {
-    // Translittère les caractères accentués en leurs équivalents non accentués
-    $slug = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $string);
+    $slug = preg_replace('/\s+/u', '-', trim($string));
+    $slug = str_replace('/', '', $slug);
+    $slug = str_replace('?', '', $slug);
+    $slug = str_replace(',', '', $slug);
 
-    // Remplace les espaces par des tirets
-    $slug = preg_replace('/\s+/u', '-', trim($slug));
+    return mb_strtolower($slug);
+  }
+}
 
-    // Supprime les caractères spéciaux non désirés
-    $slug = preg_replace('/[^a-zA-Z0-9\-]/', '', $slug);
-
-    // Convertit en minuscules
-    $slug = mb_strtolower($slug);
-
-    // Supprime les tirets multiples consécutifs
-    $slug = preg_replace('/-+/', '-', $slug);
-
-    // Supprime les tirets en début et fin de chaîne
-    $slug = trim($slug, '-');
-
+if (!function_exists('make_slug')) {
+  function make_slug($string)
+  {
+    $slug = preg_replace('/\s+/u', '-', trim($string));
+    $slug = str_replace("/", "", $slug);
+    $slug = str_replace("?", "", $slug);
     return $slug;
   }
 }
-
-// Supprimez la fonction `make_slug` car elle est redondante avec `createSlug`
-if (function_exists('make_slug')) {
-  function make_slug($string)
-  {
-    // Utilisez `createSlug` à la place pour éviter la duplication de code
-    return createSlug($string);
-  }
-}
-
 
 if (!function_exists('make_input_name')) {
   function make_input_name($string)
@@ -246,12 +233,12 @@ if (!function_exists('storeTranscation')) {
       $pre_balance = NULL;
       $after_balance = NULL;
     }
-    //store data to transcation table 
+    //store data to transcation table
     $transcation = Transaction::create([
       'transcation_id' => time(),
       'booking_id' => $booking->id,
       'transcation_type' => $booking->transcation_type,
-      'customer_id' => $booking->customer_id,
+      'customer_id' => Auth::guard('customer')->check() == true ? Auth::guard('customer')->user()->id : null,
       'organizer_id' => $booking->organizer_id,
       'payment_status' => $booking->paymentStatus,
       'payment_method' => $booking->paymentMethod,
@@ -270,7 +257,7 @@ if (!function_exists('storeTranscation')) {
 if (!function_exists('storeProductTranscation')) {
   function storeProductTranscation($orderInfo)
   {
-    //store data to transcation table 
+    //store data to transcation table
     $transcation = Transaction::create([
       'transcation_id' => time(),
       'booking_id' => $orderInfo->id,
@@ -414,12 +401,12 @@ if (!function_exists('symbolPrice')) {
   {
     $basic = Basic::where('uniqid', 12345)->select('base_currency_symbol_position', 'base_currency_symbol')->first();
     if ($basic->base_currency_symbol_position == 'left') {
-    $data = $basic->base_currency_symbol . ' ' . round($price, 2);
-    return $data;
-} elseif ($basic->base_currency_symbol_position == 'right') {
-    $data = round($price, 2) . ' ' . $basic->base_currency_symbol;
-    return $data;
-}
+      $data = $basic->base_currency_symbol . round($price, 2);
+      return str_replace(' ', '', $data);
+    } elseif ($basic->base_currency_symbol_position == 'right') {
+      $data = round($price, 2) . $basic->base_currency_symbol;
+      return str_replace(' ', '', $data);
+    }
   }
 }
 

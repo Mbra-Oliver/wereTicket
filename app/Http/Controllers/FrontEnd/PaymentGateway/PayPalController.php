@@ -62,7 +62,7 @@ class PayPalController extends Controller
     ];
 
     $message = [];
-
+    
     $message['fname.required'] = 'The first name feild is required';
     $message['lname.required'] = 'The last name feild is required';
     $message['gateway.required'] = 'The payment gateway feild is required';
@@ -192,23 +192,19 @@ class PayPalController extends Controller
       $execution->setPayerId($urlInfo['PayerID']);
       $result = $payment->execute($execution, $this->api_context);
 
-
-
       if ($result->getState() == 'approved') {
         $enrol = new BookingController();
 
         $bookingInfo['transcation_type'] = 1;
-
         // store the course enrolment information in database
         $bookingInfo = $enrol->storeData($arrData);
 
         $ticket = DB::table('basic_settings')->select('how_ticket_will_be_send')->first();
-
         if ($ticket->how_ticket_will_be_send == 'instant') {
           // generate an invoice in pdf format
           $invoice = $enrol->generateInvoice($bookingInfo, $bookingInfo->event_id);
 
-          //unlink qr code 
+          //unlink qr code
           if (
             $bookingInfo->variation != null
           ) {
@@ -275,6 +271,7 @@ class PayPalController extends Controller
         return redirect()->route('event_booking.cancel', ['id' => $event_id]);
       }
     } catch (\Exception $th) {
+      // dd($th->getMessage());
     }
   }
 }

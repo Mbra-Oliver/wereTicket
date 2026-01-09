@@ -22,7 +22,7 @@ class StripeController extends Controller
   public function bookingProcess(Request $request, $eventId)
   {
     $eventId = $eventId;
-    // card validation start 
+    // card validation start
     $rules = [
       'fname' => 'required',
       'lname' => 'required',
@@ -33,8 +33,12 @@ class StripeController extends Controller
       'gateway' => 'required',
       'stripeToken' => 'required',
     ];
+    $message = [];
+    $message['fname.required'] = 'The first name feild is required';
+    $message['lname.required'] = 'The last name feild is required';
+    $message['gateway.required'] = 'The payment gateway feild is required';
 
-    $validator = Validator::make($request->all(), $rules);
+    $validator = Validator::make($request->all(), $rules,$message);
 
     if ($validator->fails()) {
       return redirect()->back()->withErrors($validator)->withInput();
@@ -42,7 +46,6 @@ class StripeController extends Controller
     // card validation end
 
     $enrol = new BookingController();
-
 
     $currencyInfo = $this->getCurrencyInfo();
     $total = Session::get('grand_total');
@@ -122,7 +125,7 @@ class StripeController extends Controller
             // generate an invoice in pdf format
             $invoice = $enrol->generateInvoice($bookingInfo, $bookingInfo->event_id);
 
-            //unlink qr code 
+            //unlink qr code
             if (
               $bookingInfo->variation != null
             ) {

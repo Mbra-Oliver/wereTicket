@@ -30,11 +30,17 @@ class BookingExport implements FromCollection, WithHeadings, WithMapping
     $bs = Basic::firstOrFail();
     $deLang = Language::where('is_default', 1)->first();
 
+    $customer = $bookings->customerInfo()->first();
+    if ($customer) {
+      $customerName = $customer->fname . ' ' . $customer->lname;
+    } else {
+      $customerName =  "Guest";
+    }
+
     return [
       $bookings->booking_id,
       $bookings->title,
-      $bookings->customerfname.' '.$bookings->customerlname,
-
+      $customerName ?? '',
       ($bs->currencySymbolPosition == 'left' ? $bs->currencySymbol : '') . $bookings->discount . ($bs->currencySymbolPosition == 'right' ? $bs->currencySymbol : ''),
 
       ($bs->currencySymbolPosition == 'left' ? $bs->currencySymbol : '') . (empty($bookings->early_bird_discount) ? 0 : $bookings->early_bird_discount) . ($bs->currencySymbolPosition == 'right' ? $bs->currencySymbol : ''),
@@ -43,7 +49,7 @@ class BookingExport implements FromCollection, WithHeadings, WithMapping
 
       ($bs->currencySymbolPosition == 'left' ? $bs->currencySymbol : '') . (empty($bookings->price) ? 0 : $bookings->price) . ($bs->currencySymbolPosition == 'right' ? $bs->currencySymbol : ''),
 
-      $bookings->fname.' '.$bookings->lname,
+      $bookings->fname . ' ' . $bookings->lname,
       $bookings->email,
       $bookings->phone,
       $bookings->city,
@@ -59,7 +65,23 @@ class BookingExport implements FromCollection, WithHeadings, WithMapping
   public function headings(): array
   {
     return [
-      'Booking Id', 'Event', 'Customer Name', 'Discount', 'Early Bird Discount', 'Quantity', 'Total', 'Name', 'Email', 'Phone', 'City', 'State', 'Country', 'Zip Code', 'Gateway', 'Payment Status', 'Date'
+      'Booking Id',
+      'Event',
+      'Customer Name',
+      'Discount',
+      'Early Bird Discount',
+      'Quantity',
+      'Total',
+      'Name',
+      'Email',
+      'Phone',
+      'City',
+      'State',
+      'Country',
+      'Zip Code',
+      'Gateway',
+      'Payment Status',
+      'Date'
     ];
   }
 }

@@ -59,6 +59,34 @@ Route::prefix('/organizer')->middleware('auth:organizer', 'Deactive:organizer', 
   Route::get('/edit-event/{id}', 'BackEnd\Organizer\EventController@edit')->name('organizer.event_management.edit_event');
   Route::post('/event-img-dbrmv', 'BackEnd\Organizer\EventController@imagedbrmv')->name('organizer.event.imgdbrmv');
 
+
+  Route::get('all-country', 'BackEnd\Organizer\EventController@getCountry')->name('organizer.get_country');
+  Route::get('all-state', 'BackEnd\Organizer\EventController@searchSate')->name('organizer.get_state');
+  Route::get('all-city', 'BackEnd\Organizer\EventController@getSearchCity')->name('organizer.get_city');
+
+  Route::get('get-state/', 'BackEnd\Organizer\EventController@get_state')->name('organizer.get.city.state');
+  Route::get('get-cities/', 'BackEnd\Organizer\EventController@getcities')->name('organizer.get.cities.state');
+
+  // seat mapping
+  Route::prefix('/seat-mapping')->group(function () {
+    //toggle option slot
+    Route::post('/toggle-option-slot', 'BackEnd\Organizer\SlotSeatController@slotAction')->name('organizer.event_management.seat_mapping.action');
+    //slot
+    Route::prefix('/slot')->group(function ($e) {
+      Route::get('all/event/{event}/ticket/{ticket}/slot-unique/{slot_unique_id}', 'BackEnd\Organizer\SlotSeatController@allSlot')->name('organizer.event_management.seat_mapping');
+      Route::post('/background-image-update', 'BackEnd\Organizer\SlotSeatController@storeBackgroundImage')->name('organizer.event_management.seat_mapping.store_ticket');
+      Route::post('/update-store', 'BackEnd\Organizer\SlotSeatController@slotStoreUpdate')->name('organizer.event_management.seat_mapping.slot.store_update');
+      Route::post('/drag-drop', 'BackEnd\Organizer\SlotSeatController@slotDrupDrop')->name('organizer.event_management.seat_mapping.slot.drup_drop');
+      Route::post('/delete', 'BackEnd\Organizer\SlotSeatController@slotDelete')->name('organizer.event_management.seat_mapping.slot.delete');
+
+      Route::prefix('/seats')->group(function ($e) {
+        Route::get('/', 'BackEnd\Organizer\SlotSeatController@slotSeat')->name('organizer.event_management.seat_mapping.slot.seat_mapping');
+        Route::post('/update', 'BackEnd\Organizer\SlotSeatController@slotSeatUpdate')->name('organizer.event_management.seat_mapping.slot.seat_mapping_update');
+      });
+
+    });
+  });
+
   //ticket settings
   Route::get('/edit-ticket-setting/{id}', 'BackEnd\Organizer\EventController@editTicketSetting')->name('organizer.event_management.ticket_setting');
   Route::post('/update-ticket-setting', 'BackEnd\Organizer\EventController@updateTicketSetting')->name('organizer.event_management.update_ticket_setting');

@@ -139,7 +139,7 @@
                   <div class="form-group">
                     <label for="fname">{{ __('First Name') . ' *' }}</label>
                     <input type="text" name="s_fname" value="{{ Auth::guard('customer')->user()->fname }}"
-                      id="fname" class="form-control" placeholder="{{ __('First Name') }}" required>
+                      id="fname" class="form-control" placeholder="{{ __('First Name') }}">
                     @error('s_fname')
                       <p class="text-danger">{{ $message }}</p>
                     @enderror
@@ -149,7 +149,7 @@
                   <div class="form-group">
                     <label for="lname">{{ __('Last Name') . '*' }}</label>
                     <input type="text" name="s_lname" value="{{ Auth::guard('customer')->user()->lname }}"
-                      id="lname" class="form-control" placeholder="{{ __('Last Name') }}" required>
+                      id="lname" class="form-control" placeholder="{{ __('Last Name') }}">
                     @error('s_lname')
                       <p class="text-danger">{{ $message }}</p>
                     @enderror
@@ -160,7 +160,7 @@
                     <label for="email">{{ __('Email') . '*' }}</label>
                     <input type="text" name="s_email" id="email"
                       value="{{ Auth::guard('customer')->user()->email }}" class="form-control"
-                      placeholder="{{ __('Email Address') }}" required>
+                      placeholder="{{ __('Email Address') }}">
                     @error('s_email')
                       <p class="text-danger">{{ $message }}</p>
                     @enderror
@@ -170,7 +170,7 @@
                   <div class="form-group">
                     <label for="address">{{ __('Phone') . '*' }}</label>
                     <input type="text" name="s_phone" id="phone" class="form-control"
-                      value="{{ Auth::guard('customer')->user()->phone }}" placeholder="{{ __('Phone Number') }}" required>
+                      value="{{ Auth::guard('customer')->user()->phone }}" placeholder="{{ __('Phone Number') }}">
                     @error('s_phone')
                       <p class="text-danger">{{ $message }}</p>
                     @enderror
@@ -180,7 +180,7 @@
                   <div class="form-group">
                     <label for="state">{{ __('Country') }}</label>
                     <input type="text" name="s_country" value="{{ Auth::guard('customer')->user()->country }}"
-                      class="form-control" placeholder="{{ __('Country') }}" required>
+                      class="form-control" placeholder="{{ __('Country') }}">
                     @error('s_country')
                       <p class="text-danger">{{ $message }}</p>
                     @enderror
@@ -190,7 +190,7 @@
                   <div class="form-group">
                     <label for="state">{{ __('State') }}</label>
                     <input type="text" name="s_state" value="{{ Auth::guard('customer')->user()->state }}"
-                      class="form-control" placeholder="{{ __('State') }}" required>
+                      class="form-control" placeholder="{{ __('State') }}">
                     @error('s_state')
                       <p class="text-danger">{{ $message }}</p>
                     @enderror
@@ -200,7 +200,7 @@
                   <div class="form-group">
                     <label for="city">{{ __('City') . ' *' }}</label>
                     <input type="text" name="s_city" value="{{ Auth::guard('customer')->user()->city }}"
-                      class="form-control" placeholder="{{ __('City') }}" required>
+                      class="form-control" placeholder="{{ __('City') }}">
                     @error('s_city')
                       <p class="text-danger">{{ $message }}</p>
                     @enderror
@@ -210,7 +210,7 @@
                   <div class="form-group">
                     <label for="company">{{ __('Zip/Post Code') . ' *' }}</label>
                     <input type="text" name="s_zip_code" value="{{ Auth::guard('customer')->user()->zip_code }}"
-                      class="form-control" placeholder="{{ __('Zip/Post Code') }}" required>
+                      class="form-control" placeholder="{{ __('Zip/Post Code') }}">
                     @error('s_zip_code')
                       <p class="text-danger">{{ $message }}</p>
                     @enderror
@@ -218,7 +218,7 @@
                 </div>
                 <div class="col-sm-12">
                   <label for="">{{ __('Address') . ' *' }}</label>
-                  <textarea name="s_address" class="form_control" cols="2" rows="3" placeholder="{{ __('Address') }}" required>{{ Auth::guard('customer')->user()->address }}</textarea>
+                  <textarea name="s_address" class="form_control" cols="2" rows="3" placeholder="{{ __('Address') }}">{{ Auth::guard('customer')->user()->address }}</textarea>
                   @error('s_address')
                     <p class="text-danger">{{ $message }}</p>
                   @enderror
@@ -236,7 +236,7 @@
                   <div class="form-group">
                     <label for="fname">{{ __('First Name') . ' *' }}</label>
                     <input type="text" name="fname" value="" id="fname" class="form-control"
-                      placeholder="{{ __('First Name') }}" required>
+                      placeholder="{{ __('First Name') }}">
                     @error('fname')
                       <p class="text-danger">{{ $message }}</p>
                     @enderror
@@ -246,7 +246,7 @@
                   <div class="form-group">
                     <label for="lname">{{ __('Last Name') . '*' }}</label>
                     <input type="text" name="lname" value="" id="lname" class="form-control"
-                      placeholder="{{ __('Last Name') }}" required>
+                      placeholder="{{ __('Last Name') }}">
                     @error('lname')
                       <p class="text-danger">{{ $message }}</p>
                     @enderror
@@ -256,7 +256,7 @@
                   <div class="form-group">
                     <label for="email">{{ __('Email') . '*' }}</label>
                     <input type="text" name="email" id="email" value="" class="form-control"
-                      placeholder="{{ __('Email Address') }}" required>
+                      placeholder="{{ __('Email Address') }}">
                     @error('email')
                       <p class="text-danger">{{ $message }}</p>
                     @enderror
@@ -266,7 +266,7 @@
                   <div class="form-group">
                     <label for="address">{{ __('Phone') . '*' }}</label>
                     <input type="text" name="phone" id="phone" class="form-control" value=""
-                      placeholder="{{ __('Phone Number') }}" required>
+                      placeholder="{{ __('Phone Number') }}">
                     @error('phone')
                       <p class="text-danger">{{ $message }}</p>
                     @enderror
@@ -276,7 +276,7 @@
                   <div class="form-group">
                     <label for="state">{{ __('Country') }}</label>
                     <input type="text" name="country" value="" class="form-control"
-                      placeholder="{{ __('Country') }}" required>
+                      placeholder="{{ __('Country') }}">
                     @error('country')
                       <p class="text-danger">{{ $message }}</p>
                     @enderror
@@ -286,7 +286,7 @@
                   <div class="form-group">
                     <label for="state">{{ __('State') }}</label>
                     <input type="text" name="state" value="" class="form-control"
-                      placeholder="{{ __('State') }}" required>
+                      placeholder="{{ __('State') }}">
                     @error('state')
                       <p class="text-danger">{{ $message }}</p>
                     @enderror
@@ -296,7 +296,7 @@
                   <div class="form-group">
                     <label for="city">{{ __('City') . ' *' }}</label>
                     <input type="text" name="city" value="" class="form-control"
-                      placeholder="{{ __('City') }}" required>
+                      placeholder="{{ __('City') }}">
                     @error('city')
                       <p class="text-danger">{{ $message }}</p>
                     @enderror
@@ -305,7 +305,7 @@
                 <div class="col-sm-6">
                   <div class="form-group">
                     <label for="company">{{ __('Zip/Post Code') . ' *' }}</label>
-                    <input type="text" name="zip_code" value="" class="form-control" placeholder="Zip Code" required>
+                    <input type="text" name="zip_code" value="" class="form-control" placeholder="Zip Code">
                     @error('zip_code')
                       <p class="text-danger">{{ $message }}</p>
                     @enderror
@@ -313,7 +313,7 @@
                 </div>
                 <div class="col-sm-12">
                   <label for="">{{ __('Address') . ' *' }}</label>
-                  <textarea name="address" class="form_control" cols="2" rows="3" placeholder="{{ __('Address') }}" required></textarea>
+                  <textarea name="address" class="form_control" cols="2" rows="3" placeholder="{{ __('Address') }}"></textarea>
                   @error('address')
                     <p class="text-danger">{{ $message }}</p>
                   @enderror

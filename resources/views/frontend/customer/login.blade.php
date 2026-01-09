@@ -116,17 +116,8 @@
             </div>
             <div class="form-group">
               <label for="password">{{ __('Password') . ' *' }}</label>
-              <div class="password-input-wrapper" style="position: relative;">
-                <input type="password" name="password" value="" id="password" class="form-control"
-                  placeholder="{{ __('Enter Password') }}" style="padding-right: 45px;">
-                <button type="button" class="password-toggle-btn" id="password-toggle" 
-                  style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 8px 5px; color: #6c757d; outline: none; transition: color 0.3s;"
-                  aria-label="{{ __('Show password') }}"
-                  onmouseover="this.style.color='#495057'"
-                  onmouseout="this.style.color='#6c757d'">
-                  <i class="fas fa-eye" id="password-toggle-icon"></i>
-                </button>
-              </div>
+              <input type="password" name="password" value="" id="password" class="form-control"
+                placeholder="{{ __('Enter Password') }}">
               @error('password')
                 <p class="text-danger">{{ $message }}</p>
               @enderror
@@ -157,32 +148,4 @@
     </div>
   </div>
   <!-- LogIn Area End -->
-@endsection
-
-@section('custom-script')
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const passwordInput = document.getElementById('password');
-    const passwordToggle = document.getElementById('password-toggle');
-    const passwordToggleIcon = document.getElementById('password-toggle-icon');
-    
-    if (passwordToggle && passwordInput) {
-      passwordToggle.addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        if (passwordInput.type === 'password') {
-          passwordInput.type = 'text';
-          passwordToggleIcon.classList.remove('fa-eye');
-          passwordToggleIcon.classList.add('fa-eye-slash');
-          passwordToggle.setAttribute('aria-label', '{{ __("Hide password") }}');
-        } else {
-          passwordInput.type = 'password';
-          passwordToggleIcon.classList.remove('fa-eye-slash');
-          passwordToggleIcon.classList.add('fa-eye');
-          passwordToggle.setAttribute('aria-label', '{{ __("Show password") }}');
-        }
-      });
-    }
-  });
-</script>
 @endsection

@@ -71,6 +71,9 @@ class CustomerController extends Controller
 
     $messages = [];
 
+    $messages['fname.required'] = 'The first name field is required.';
+    $messages['lname.required'] = 'The last name field is required.';
+
     if ($info->google_recaptcha_status == 1) {
       $messages['g-recaptcha-response.required'] = 'Please verify that you are not a robot.';
       $messages['g-recaptcha-response.captcha'] = 'Captcha error! try again later or contact site admin.';
@@ -89,13 +92,17 @@ class CustomerController extends Controller
     $in['verification_token'] = $token;
 
     // send a mail to user for verify his/her email address
-    $this->sendVerificationMail($request, $token);
+    $mail_status = $this->sendVerificationMail($request, $token);
+    if($mail_status == false){
+      return redirect()->back()->with(['alert-type' => 'warning', 'message' => 'Mail could not be sent !']);;
+    }
     Customer::create($in);
 
     return redirect()->route('customer.login');
   }
   public function sendVerificationMail(Request $request, $token)
   {
+    $mail_status = true;
     // first get the mail template information from db
     $mailTemplate = MailTemplate::where('mail_type', 'verify_email')->first();
     $mailSubject = $mailTemplate->mail_subject;
@@ -142,14 +149,14 @@ class CustomerController extends Controller
       $mail->Body = $mailBody;
 
       $mail->send();
-
+      $mail_status = true;
       Session::flash('success', 'A verification mail has been sent to your email address.');
     } catch (Exception $e) {
-      Session::flash('error', 'Mail could not be sent!');
+      $mail_status = false;
     }
-
-    return;
+    return $mail_status;
   }
+  
   public function signupVerify(Request $request, $token)
   {
     try {
@@ -347,6 +354,7 @@ class CustomerController extends Controller
 
       Session::flash('success', 'A mail has been sent to your email address.');
     } catch (\Exception $e) {
+
       Session::flash('error', 'Mail could not be sent!');
     }
 
@@ -459,7 +467,6 @@ class CustomerController extends Controller
     $id = Auth::guard('customer')->user()->id;
     $update = Customer::find($id)->update($in);
     Session::flash('success', 'Your profile has been successfully updated!');
-
     return back();
   }
   //wishlist

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\BackEnd\User;
 
 use App\Http\Controllers\Controller;
 use App\Http\Helpers\UploadFile;
+use App\Jobs\PushNotificationJob;
 use App\Models\Guest;
 use App\Notifications\PushNotification;
 use App\Rules\ImageMimeTypeRule;
@@ -32,6 +33,7 @@ class PushNotificationController extends Controller
     if (is_null($data->notification_image)) {
       $rules['notification_image'] = 'required';
     }
+
     if ($request->hasFile('notification_image')) {
       $rules['notification_image'] = new ImageMimeTypeRule();
     }
@@ -39,6 +41,7 @@ class PushNotificationController extends Controller
     if (env('VAPID_PUBLIC_KEY') == null && !$request->filled('vapid_public_key')) {
       $rules['vapid_public_key'] = 'required';
     }
+
     if (env('VAPID_PRIVATE_KEY') == null && !$request->filled('vapid_private_key')) {
       $rules['vapid_private_key'] = 'required';
     }
@@ -80,6 +83,8 @@ class PushNotificationController extends Controller
 
   public function sendNotification(Request $request)
   {
+
+
     $rules = [
       'title' => 'required',
       'button_name' => 'required',
@@ -101,6 +106,14 @@ class PushNotificationController extends Controller
     $guests = Guest::all();
 
     Notification::send($guests, new PushNotification($title, $message, $buttonName, $buttonURL));
+
+    $firebase_admin_json = DB::table('basic_settings')
+      ->where('uniqid', 12345)
+      ->value('firebase_admin_json');
+
+    if (!is_null($firebase_admin_json)) {
+      PushNotificationJob::dispatch($title, $message, $buttonName, $buttonURL)->delay(now()->addSeconds(1));
+    }
 
     Session::flash('success', 'Notification has been send');
 

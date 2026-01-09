@@ -15,6 +15,11 @@ class OfflineController extends Controller
 {
   public function bookingProcess(Request $request, $eventId)
   {
+    $message = [];
+    $message['fname.required'] = 'The first name feild is required';
+    $message['lname.required'] = 'The last name feild is required';
+    $message['gateway.required'] = 'The payment gateway feild is required';
+
     $request->validate([
       'fname' => 'required',
       'lname' => 'required',
@@ -23,7 +28,7 @@ class OfflineController extends Controller
       'country' => 'required',
       'address' => 'required',
       'gateway' => 'required',
-    ]);
+    ], $message);
     $offlineGateway = OfflineGateway::find($request->gateway);
 
     // check whether attachment is required or not
@@ -44,7 +49,7 @@ class OfflineController extends Controller
       }
     }
 
-    $booking = new BookingController();
+    $enrol = new BookingController();
 
     $currencyInfo = $this->getCurrencyInfo();
     $total = Session::get('grand_total');
@@ -93,7 +98,7 @@ class OfflineController extends Controller
       $arrData['attachmentFile'] = $filename;
     }
     // store the course enrolment information in database
-    $bookingInfo = $booking->storeData($arrData);
+    $bookingInfo = $enrol->storeData($arrData);
 
     $request->session()->forget('event_id');
     $request->session()->forget('selTickets');

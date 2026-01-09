@@ -11,9 +11,7 @@ use App\Http\Controllers\BackEnd\Event\CategoryController;
 
 Route::get('admin/pwa/', 'BackEnd\AdminController@pwa')->name('admin.pwa.new');
 Route::post('admin/check-qrcode/', 'BackEnd\AdminController@check_qrcode')->name('admin.check-qrcode');
-
 Route::get('admin/get-state-city/{id}', 'BackEnd\Event\EventController@city_state')->name('get.city.state');
-
 Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function () {
   // admin redirect to dashboard route
   Route::get('/dashboard', 'BackEnd\AdminController@redirectToDashboard')->name('admin.dashboard');
@@ -26,7 +24,6 @@ Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function
 
   // change admin-panel theme (dark/light) route
   Route::post('/change-theme', 'BackEnd\AdminController@changeTheme')->name('admin.change_theme');
-
   // admin profile settings route start
   Route::get('/edit-profile', 'BackEnd\AdminController@editProfile')->name('admin.edit_profile');
 
@@ -109,20 +106,72 @@ Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function
     Route::post('ticket_management/update/ticket', 'BackEnd\Event\TicketController@update')->name('admin.ticket_management.update_ticket');
     Route::post('bulk/delete/bulk/event/ticket', 'BackEnd\Event\TicketController@bulk_delete')->name('admin.event_management.bulk_delete_event_ticket');
 
+    Route::prefix('settings')->group(function () {
+      Route::get('/', 'BackEnd\Event\SettingController@index')->name('admin.event_management.settings');
+      Route::post('/update', 'BackEnd\Event\SettingController@update')->name('admin.event_management.settings_update');
+    });
+
+    Route::prefix('countires')->group(function () {
+      Route::get('/', 'BackEnd\Event\CountryController@index')->name('admin.event_management.countries');
+      Route::post('/store', 'BackEnd\Event\CountryController@store')->name('admin.event_management.store_country');
+      Route::post('/update', 'BackEnd\Event\CountryController@update')->name('admin.event_management.update_country');
+      Route::post('/delete/{id}', 'BackEnd\Event\CountryController@destroy')->name('admin.event_management.delete_country');
+      Route::post('/bulk-delete', 'BackEnd\Event\CountryController@bulkDestroy')->name('admin.event_management.bulk-delete_country');
+    });
+
+    Route::prefix('state')->group(function () {
+      Route::get('/', 'BackEnd\Event\StateController@index')->name('admin.event_management.state');
+      Route::post('/store', 'BackEnd\Event\StateController@store')->name('admin.event_management.store_state');
+      Route::get('/edit/{id}', 'BackEnd\Event\StateController@edit')->name('admin.event_management.edit_state');
+      Route::post('/update', 'BackEnd\Event\StateController@update')->name('admin.event_management.update_state');
+      Route::post('/delete/{id}', 'BackEnd\Event\StateController@destroy')->name('admin.event_management.delete_state');
+      Route::post('/bulk-delete', 'BackEnd\Event\StateController@bulkDestroy')->name('admin.event_management.bulk-delete_state');
+    });
+
+    Route::prefix('city')->group(function () {
+      Route::get('/', 'BackEnd\Event\CityController@index')->name('admin.event_management.city');
+      Route::get('/edit', 'BackEnd\Event\CityController@edit')->name('admin.event_management.edit_city');
+      Route::post('/store', 'BackEnd\Event\CityController@store')->name('admin.event_management.store_city');
+      Route::post('/update', 'BackEnd\Event\CityController@update')->name('admin.event_management.update_city');
+      Route::post('/delete/{id}', 'BackEnd\Event\CityController@destroy')->name('admin.event_management.delete_city');
+      Route::post('/bulk-delete', 'BackEnd\Event\CityController@bulkDestroy')->name('admin.event_management.bulk-delete_city');
+    });
+
+    Route::get('all-country', 'BackEnd\Event\EventController@getCountry')->name('admin.get_country');
+    Route::get('all-state', 'BackEnd\Event\EventController@searchSate')->name('admin.get_state');
+    Route::get('all-city', 'BackEnd\Event\EventController@getSearchCity')->name('admin.get_city');
+
+    Route::get('get-state/', 'BackEnd\Event\CityController@get_state')->name('get.city.state');
+    Route::get('get-cities/', 'BackEnd\Event\CityController@getcities')->name('get.cities.state');
+
+
+    // seat mapping
+    Route::prefix('/seat-mapping')->group(function () {
+      //toggle option slot
+      Route::post('/toggle-option-slot', 'BackEnd\Event\SlotSeatController@slotAction')->name('admin.event_management.seat_mapping.action');
+
+      //slot
+      Route::prefix('/slot')->group(function ($e) {
+        Route::get('all/event/{event}/ticket/{ticket}/slot-unique/{slot_unique_id}', 'BackEnd\Event\SlotSeatController@allSlot')->name('admin.event_management.seat_mapping');
+        Route::post('/background-image-update', 'BackEnd\Event\SlotSeatController@storeBackgroundImage')->name('admin.event_management.seat_mapping.store_ticket');
+        Route::post('/update-store', 'BackEnd\Event\SlotSeatController@slotStoreUpdate')->name('admin.event_management.seat_mapping.slot.store_update');
+        Route::post('/drag-drop', 'BackEnd\Event\SlotSeatController@slotDrupDrop')->name('admin.event_management.seat_mapping.slot.drup_drop');
+        Route::post('/delete', 'BackEnd\Event\SlotSeatController@slotDelete')->name('admin.event_management.seat_mapping.slot.delete');
+
+        Route::prefix('/seats')->group(function ($e) {
+          Route::get('/', 'BackEnd\Event\SlotSeatController@slotSeat')->name('admin.event_management.seat_mapping.slot.seat_mapping');
+          Route::post('/update', 'BackEnd\Event\SlotSeatController@slotSeatUpdate')->name('admin.event_management.seat_mapping.slot.seat_mapping_update');
+        });
+      });
+    });
 
     // event route start
     Route::prefix('/event-management')->group(function () {
-
       Route::get('/categories', 'BackEnd\Event\CategoryController@index')->name('admin.event_management.categories');
-
       Route::post('/store-category', 'BackEnd\Event\CategoryController@store')->name('admin.event_management.store_category');
-
       Route::post('/category/{id}/update-featured', 'BackEnd\Event\CategoryController@updateFeatured')->name('admin.event_management.category.update_featured');
-
       Route::put('/update-category', 'BackEnd\Event\CategoryController@update')->name('admin.event_management.update_category');
-
       Route::post('/delete-category/{id}', 'BackEnd\Event\CategoryController@destroy')->name('admin.event_management.delete_category');
-
       Route::post('/bulk-delete-category', 'BackEnd\Event\CategoryController@bulkDestroy')->name('admin.event_management.bulk_delete_category');
     });
   });
@@ -394,9 +443,8 @@ Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function
     Route::post('/{id}/update-keyword', 'BackEnd\LanguageController@updateKeyword')->name('admin.language_management.update_keyword');
 
     Route::post('/{id}/delete-language', 'BackEnd\LanguageController@destroy')->name('admin.language_management.delete_language');
-
-    Route::get('/{id}/check-rtl', 'BackEnd\LanguageController@checkRTL');
   });
+  Route::get('/language-management/{id}/check-rtl', 'BackEnd\LanguageController@checkRTL');
   // language management route end
 
 
@@ -426,10 +474,7 @@ Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function
     Route::post('/update-theme-and-home', 'BackEnd\BasicSettings\BasicController@updateThemeAndHome')->name('admin.basic_settings.update_theme_and_home');
 
     // basic settings currency route
-    Route::get(
-      '/currency',
-      'BackEnd\BasicSettings\BasicController@currency'
-    )->name('admin.basic_settings.currency');
+    Route::get('/currency','BackEnd\BasicSettings\BasicController@currency')->name('admin.basic_settings.currency');
 
     Route::post('/update-currency', 'BackEnd\BasicSettings\BasicController@updateCurrency')->name('admin.basic_settings.update_currency');
 
@@ -458,10 +503,7 @@ Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function
     // basic settings mail route end
 
     // basic settings breadcrumb route
-    Route::get(
-      '/breadcrumb',
-      'BackEnd\BasicSettings\BasicController@breadcrumb'
-    )->name('admin.basic_settings.breadcrumb');
+    Route::get('/breadcrumb','BackEnd\BasicSettings\BasicController@breadcrumb')->name('admin.basic_settings.breadcrumb');
 
     Route::post('/update-breadcrumb', 'BackEnd\BasicSettings\BasicController@updateBreadcrumb')->name('admin.basic_settings.update_breadcrumb');
 
@@ -480,6 +522,7 @@ Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function
     Route::post('/update-facebook', 'BackEnd\BasicSettings\BasicController@updateFacebook')->name('admin.basic_settings.update_facebook');
 
     Route::post('/update-google', 'BackEnd\BasicSettings\BasicController@updateGoogle')->name('admin.basic_settings.update_google');
+    Route::post('/update-geo', 'BackEnd\BasicSettings\BasicController@updategeo')->name('admin.basic_settings.geo');
 
     Route::post('/update-whatsapp', 'BackEnd\BasicSettings\BasicController@updateWhatsApp')->name('admin.basic_settings.update_whatsapp');
     // basic settings plugins route end
@@ -515,6 +558,22 @@ Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function
     Route::put('/update-social-media', 'BackEnd\BasicSettings\SocialMediaController@update')->name('admin.basic_settings.update_social_media');
 
     Route::post('/delete-social-media/{id}', 'BackEnd\BasicSettings\SocialMediaController@destroy')->name('admin.basic_settings.delete_social_media');
+  });
+
+ //mobile interface
+  Route::prefix('mobile-interface')->middleware('permission:Mobile Interface')->group(function () {
+    Route::get('/', 'BackEnd\MobileInterfaceController@index')->name('admin.mobile_interface');
+    Route::get('/home-page-content', 'BackEnd\MobileInterfaceController@content')->name('admin.mobile_interface_content');
+    Route::post('home-page-content/update', 'BackEnd\MobileInterfaceController@update')->name('admin.mobile_interface_update');
+    Route::get('/general-setting', 'BackEnd\MobileInterfaceController@setting')->name('admin.mobile_interface_gsetting');
+    Route::post('/general-setting/update', 'BackEnd\MobileInterfaceController@settingUpdate')->name('admin.mobile_interface_gsetting.update');
+    Route::get('/online-gateways', 'BackEnd\MobileInterfaceController@paymentGateways')->name('admin.mobile_interface.payment_gateways');
+    Route::get('/plugins', 'BackEnd\MobileInterfaceController@plugins')->name('admin.mobile_interface.plugins');
+    Route::post('/update-firebase', 'BackEnd\MobileInterfaceController@updateFirebase')->name('admin.basic_settings.updateFirebase');
+
+    Route::post('/update-google', 'BackEnd\MobileInterfaceController@updateGoogle')->name('admin.basic_settings.mobile_interface.update_google');
+    Route::post('/update-facebook', 'BackEnd\MobileInterfaceController@updateFacebook')->name('admin.basic_settings.mobile_interface.update_facebook');
+    Route::post('/update-geo', 'BackEnd\MobileInterfaceController@updateGeo')->name('admin.basic_settings.mobile_interface.geo');
   });
 
 
@@ -603,14 +662,11 @@ Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function
   });
   // home-page route end
 
-
   // payment-gateway route start
   Route::prefix('/payment-gateways')->middleware('permission:Payment Gateways')->group(function () {
     Route::get('/online-gateways', 'BackEnd\PaymentGateway\OnlineGatewayController@index')->name('admin.payment_gateways.online_gateways');
 
     Route::post('/update-paypal-info', 'BackEnd\PaymentGateway\OnlineGatewayController@updatePayPalInfo')->name('admin.payment_gateways.update_paypal_info');
-    
-        Route::post('/update-cinetpay-info', 'BackEnd\PaymentGateway\OnlineGatewayController@updateCinetPayInfo')->name('admin.payment_gateways.update_cinetpay_info');
 
     Route::post('/update-instamojo-info', 'BackEnd\PaymentGateway\OnlineGatewayController@updateInstamojoInfo')->name('admin.payment_gateways.update_instamojo_info');
 
@@ -647,6 +703,12 @@ Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function
 
     Route::post('/update-perfect_money-info', 'BackEnd\PaymentGateway\OnlineGatewayController@updatePerfectMoneyInfo')->name('admin.payment_gateways.update_perfect_money_info');
 
+    //mobile interface
+    Route::post('/anet', 'BackEnd\PaymentGateway\OnlineGatewayController@updateAnetInfo')->name('admin.payment_gateways.update_anet_info');;
+    Route::post('/monify', 'BackEnd\PaymentGateway\OnlineGatewayController@updateMonify')->name('admin.payment_gateways.update_monify');
+    Route::post('/nowpayments', 'BackEnd\PaymentGateway\OnlineGatewayController@updateNowPayments')->name('admin.payment_gateways.update_nowpayments');
+
+
     Route::get('/offline-gateways', 'BackEnd\PaymentGateway\OfflineGatewayController@index')->name('admin.payment_gateways.offline_gateways');
 
     Route::post('/store-offline-gateway', 'BackEnd\PaymentGateway\OfflineGatewayController@store')->name('admin.payment_gateways.store_offline_gateway');
@@ -656,6 +718,9 @@ Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function
     Route::post('/update-offline-gateway', 'BackEnd\PaymentGateway\OfflineGatewayController@update')->name('admin.payment_gateways.update_offline_gateway');
 
     Route::post('/delete-offline-gateway/{id}', 'BackEnd\PaymentGateway\OfflineGatewayController@destroy')->name('admin.payment_gateways.delete_offline_gateway');
+
+
+
   });
   // payment-gateway route end
 
@@ -761,8 +826,6 @@ Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function
     Route::post('update/contact-page/{lagnid}', 'BackEnd\ContactController@update')->name('admin.update.contact_page');
   });
   // footer route end
-
-
   // subscriber route start
   Route::get('/subscribers', 'BackEnd\User\SubscriberController@index')->name('admin.user_management.subscribers');
 
@@ -801,4 +864,5 @@ Route::prefix('/admin')->middleware(['auth:admin', 'adminLang'])->group(function
 
     Route::post('/remove-image', 'BackEnd\SummernoteController@remove');
   });
+
 });

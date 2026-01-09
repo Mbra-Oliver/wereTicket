@@ -44,7 +44,7 @@ class OrganizerController extends Controller
     $information['total_event_bookings'] = Booking::where('organizer_id', Auth::guard('organizer')->user()->id)->get()->count();
     $information['transcation_count'] = Transaction::where('organizer_id', Auth::guard('organizer')->user()->id)->get()->count();
 
-    //income of event bookings 
+    //income of event bookings
     $eventBookingTotalIncomes = DB::table('bookings')
       ->select(DB::raw('month(created_at) as month'), DB::raw('sum(price) as total'))
       ->where('paymentStatus', '=', 'completed')
@@ -155,13 +155,9 @@ class OrganizerController extends Controller
     }
 
     $validator = Validator::make($request->all(), $rules, $messages);
-
-
     if ($validator->fails()) {
       return redirect()->back()->withErrors($validator->errors());
     }
-
-
 
     $in = $request->all();
 
@@ -222,14 +218,13 @@ class OrganizerController extends Controller
 
         Session::flash('success', ' Verification mail has been sent to your email address!');
       } catch (\Exception $e) {
-        Session::flash('error', 'Mail could not be sent!');
-        return redirect()->back();
+        return redirect()->back()->with(['alert-type' => 'warning', 'message' => 'Mail could not be sent !']);
       }
-
       $in['status'] = 0;
     } else {
       Session::flash('success', 'Sign up successfully completed.Please Login Now');
     }
+
     if ($setting->organizer_admin_approval == 1) {
       $in['status'] = 0;
     }
@@ -382,7 +377,7 @@ class OrganizerController extends Controller
 
       Session::flash('success', 'A mail has been sent to your email address.');
     } catch (\Exception $e) {
-      Session::flash('error', 'Mail could not be sent!');
+      Session::flash('message', 'Mail could not be sent!');
     }
 
     // store user email in session to use it later
@@ -411,11 +406,12 @@ class OrganizerController extends Controller
 
     return redirect()->route('organizer.login');
   }
+
+
   public function logout(Request $request)
   {
     Auth::guard('organizer')->logout();
     Session::forget('secret_login');
-
     return redirect()->route('organizer.login');
   }
   //change_password
@@ -423,6 +419,7 @@ class OrganizerController extends Controller
   {
     return view('organizer.change-password');
   }
+
   //update_password
   public function updated_password(Request $request)
   {
@@ -468,7 +465,6 @@ class OrganizerController extends Controller
   //update_profile
   public function update_profile(Request $request)
   {
-
 
     $rules = [
       'email' => [
@@ -541,7 +537,6 @@ class OrganizerController extends Controller
     }
 
     Session::flash('success', 'Updated Successfully');
-
     return Response::json(['status' => 'success'], 200);
   }
   //verify_email
@@ -611,7 +606,7 @@ class OrganizerController extends Controller
       Session::flash('success', ' Verification mail has been send your email address!');
       return response()->json(['status' => 'success'], 200);
     } catch (\Exception $e) {
-      Session::flash('error', 'Mail could not be sent!');
+      Session::flash('message', 'Mail could not be sent!');
       return redirect()->back();
     }
   }
@@ -652,7 +647,7 @@ class OrganizerController extends Controller
       $check = Booking::where([['booking_id', $booking_id]])->first();
       if ($check) {
         if ($check->organizer_id == $organizer_id) {
-          // check payment status completed or not 
+          // check payment status completed or not
           if ($check->paymentStatus == 'completed' || $check->paymentStatus == 'free') {
             //check scanned_tickets column empty or not
             if (is_null($check->scanned_tickets)) {

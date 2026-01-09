@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -9,19 +10,25 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/offline', 'FrontEnd\HomeController@offline');
+Route::post('/push-notification/store-endpoint', 'FrontEnd\PushNotificationController@store');
+// Route::get('/test-pdf', 'FrontEnd\HomeController@testPDF');
+
+Route::get('/migrate', function () {
+  Artisan::call('migrate');
+});
 
 Route::get('login', function () {
-  return view('frontend.organizer.login'); 
-})->name('login'); 
+  return view('frontend.organizer.login');
+})->name('login');
 
-// cron job for check iyzico payment 
+// cron job for check iyzico payment
 Route::get('/check-payment', 'CronJobController@checkIyzicoPendingPayment')->name('cron.check.payment');
 Route::get('/send-ticket', 'CronJobController@sendTicket')->name('cron.send.ticket');
 
-Route::get('midtrans/cancel', 'FrontEnd\HomeController@midtrans_cancel')->name('midtrans_cancel'); // banking er IPN
-Route::post('xendit/callback', 'FrontEnd\HomeController@xendit_callback')->name('xendit_cancel');
-Route::get('myfatoorah/callback', 'FrontEnd\HomeController@myfatoorah_callback')->name('myfatoorah_callback');
+Route::get('/send-push-notification-phone', 'CronJobController@sendPushNotificationPhone')->name('cron.send.push_notification_phone');
 
+Route::get('midtrans/cancel', 'FrontEnd\HomeController@midtrans_cancel')->name('midtrans_cancel'); // banking er IPN
+Route::get('myfatoorah/callback', 'FrontEnd\HomeController@myfatoorah_callback')->name('myfatoorah_callback');
 Route::get('myfatoorah/cancel', 'FrontEnd\HomeController@myfatoorah_cancel')->name('myfatoorah_cancel');
 
 /*
@@ -126,7 +133,7 @@ Route::prefix('event-booking')->group(function () {
   Route::post('/paytm/notify', 'FrontEnd\PaymentGateway\PaytmController@notify')->name('event_booking.paytm.notify');
 
   Route::get('make-payment', 'FrontEnd\PaymentGateway\MidtransController@makePayment')->name('makePayment');
-  Route::get('notify/{orderId}?', 'FrontEnd\PaymentGateway\MidtransController@ccNotify')->name('event.midtrans.notify'); // credit card er IPN
+  Route::get('notify/{orderId}', 'FrontEnd\PaymentGateway\MidtransController@ccNotify')->name('event.midtrans.notify'); // credit card er IPN
   Route::get('bank-notify', 'FrontEnd\PaymentGateway\MidtransController@bankNotify')->name('bank.notify'); // banking er IPN
 
   //iyzico
@@ -154,17 +161,6 @@ Route::prefix('event-booking')->group(function () {
   Route::get('/perfect-money/notify', 'FrontEnd\PaymentGateway\PerfectMoneyController@notify')->name('event_booking.perfect-money.notify');
 
   Route::get('/perfect-money/cancel', 'FrontEnd\PaymentGateway\PerfectMoneyController@cancel')->name('event_booking.perfect-money.cancel');
-  
-  
-  
-  
-  //cinetpay money
-  Route::post('/cinetpay/callback/{eventId}', 'FrontEnd\PaymentGateway\CinetPayController@notify')->name('event_booking.cinetpay.notify');
-
-  Route::match(['get','post'],'/cinetpay/return/{eventId}', 'FrontEnd\PaymentGateway\CinetPayController@returnFromPayment')->name('event_booking.cinetpay.return');
-
-
-  Route::get('/cinetpay/cancel', 'FrontEnd\PaymentGateway\CinetPayController@cancel')->name('event_booking.cinetpay.cancel');
 });
 /*
 |---------------------------------------------------------------------------------
@@ -173,10 +169,8 @@ Route::prefix('event-booking')->group(function () {
 */
 
 
-Route::post('/push-notification/store-endpoint', 'FrontEnd\PushNotificationController@store');
 
 Route::get('/change-language', 'Controller@changeLanguage')->name('change_language');
-
 Route::post('/store-subscriber', 'Controller@storeSubscriber')->name('store_subscriber');
 
 /*
@@ -189,8 +183,13 @@ Route::middleware('change.lang')->group(function () {
   Route::get('/', 'FrontEnd\HomeController@index')->name('index');
   Route::get('events', 'FrontEnd\EventController@index')->name('events');
   Route::get('event/{slug}/{id}', 'FrontEnd\EventController@details')->name('event.details');
+  Route::get('event/slot-mapping-seat', 'FrontEnd\EventController@slotMapping')->name('event.slot-mapping-seat');
   Route::get('addto/wishlist/{id}', 'FrontEnd\EventController@add_to_wishlist')->name('addto.wishlist');
   Route::get('remove/wishlist/{id}', 'FrontEnd\CustomerController@remove_wishlist')->name('remove.wishlist');
+
+  Route::get('get-country', 'FrontEnd\EventController@getCountry')->name('frontend.get_country');
+  Route::get('get-state', 'FrontEnd\EventController@searchSate')->name('frontend.get_state');
+  Route::get('get-city', 'FrontEnd\EventController@getSearchCity')->name('frontend.get_city');
 
   Route::post('/check-out2', 'FrontEnd\CheckOutController@checkout2')->name('check-out2');
   Route::get('/checkout', 'FrontEnd\CheckOutController@checkout')->name('check-out');
@@ -245,8 +244,10 @@ Route::prefix('product-order')->group(function () {
   Route::post('flutterwave/notify', 'FrontEnd\Shop\PaymentGateway\FlutterwaveController@notify')->name('product_order.flutterwave.notify');
 
   Route::get('make-payment', 'FrontEnd\Shop\PaymentGateway\MidtransController@makePayment')->name('shop.makePayment');
-  Route::get('notify/{orderId}', 'FrontEnd\Shop\PaymentGateway\MidtransController@ccNotify')->name('shop.midtrans.notify'); // credit card er IPN
-  Route::get('bank-notify', 'FrontEnd\Shop\PaymentGateway\MidtransController@bankNotify')->name('shop.bank.notify'); // banking er IPN
+  Route::get('notify/{orderId}', 'FrontEnd\Shop\PaymentGateway\MidtransController@ccNotify')->name('shop.midtrans.notify');
+  // credit card er IPN
+  Route::get('bank-notify', 'FrontEnd\Shop\PaymentGateway\MidtransController@bankNotify')->name('shop.bank.notify');
+  // banking er IPN
 
   //paytabs
   Route::get('/paytabs/make-payment', 'FrontEnd\Shop\PaymentGateway\PaytabsController@makePayment')->name('shop.paytabs.makePayment');
@@ -271,30 +272,21 @@ Route::prefix('product-order')->group(function () {
   Route::get('/perfect-money/cancel', 'FrontEnd\Shop\PaymentGateway\PerfectMoneyController@cancel')->name('shop.perfect-money.cancel');
 });
 
-
 /*
 |---------------------------------------------------------------------------------
 | Product order routes are end
 |---------------------------------------------------------------------------------
 */
 
-
-
-
 Route::middleware('change.lang')->group(function () {
-
   Route::get('/blog', 'FrontEnd\BlogController@blogs')->name('blogs');
-
   Route::get('/blog/{slug}', 'FrontEnd\BlogController@details')->name('blog_details');
-
   Route::get('/faq', 'FrontEnd\FaqController@faqs')->name('faqs');
-
   Route::get('/contact', 'FrontEnd\ContactController@contact')->name('contact');
   Route::get('/about-us', 'FrontEnd\HomeController@about')->name('about');
 });
 
 Route::post('/contact/send-mail', 'FrontEnd\ContactController@sendMail')->name('contact.send_mail');
-
 Route::post('/advertisement/{id}/total-view', 'Controller@countAdView');
 
 
@@ -320,7 +312,6 @@ Route::prefix('/admin')->middleware('guest:admin')->group(function () {
   // send mail to admin for forget password route
   Route::post('/mail-for-forget-password', 'BackEnd\AdminController@sendMail')->name('admin.mail_for_forget_password');
 });
-
 
 /*
 |--------------------------------------------------------------------------

@@ -5,12 +5,9 @@ namespace App\Http\Controllers\FrontEnd\PaymentGateway;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FrontEnd\Event\BookingController;
 use App\Models\BasicSettings\Basic;
-use App\Models\Earning;
-use App\Models\Event\Booking;
 use Config\Iyzipay;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
-use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Cache;
 
 class IyzipayController extends Controller

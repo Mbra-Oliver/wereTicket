@@ -131,7 +131,17 @@
                               href="{{ route('event.details', ['slug' => $booking->slug, 'id' => $booking->event_id]) }}"
                               target="_blank">{{ strlen($booking->title) > 35 ? mb_substr($booking->title, 0, 35, 'utf-8') . '...' : $booking->title }}</a>
                           </td>
-                          <td>{{ $booking->customerfname }} {{ $booking->customerlname }}</td>
+                          <td>
+                          @php
+                            $customer = $booking->customerInfo()->first();
+                          @endphp
+                            @if ($customer)
+                             {{ $customer->fname }} {{ $customer->lname }}
+                            @else
+                             {{ __('Guest') }}
+                            @endif
+
+                          </td>
 
                           <td>
                             {{ $abs->base_currency_symbol_position == 'left' ? $abs->base_currency_symbol : '' }}{{ round($booking->discount, 2) }}{{ $abs->base_currency_symbol_position == 'right' ? $abs->base_currency_symbol : '' }}
@@ -147,7 +157,9 @@
                             {{ $abs->base_currency_symbol_position == 'left' ? $abs->base_currency_symbol : '' }}{{ round($booking->price, 2) }}{{ $abs->base_currency_symbol_position == 'right' ? $abs->base_currency_symbol : '' }}
                           </td>
 
-                          <td>{{ $booking->fname }} {{ $booking->lname }}</td>
+                          <td>
+                            {{ $booking->fname }} {{ $booking->lname }}
+                          </td>
                           <td>{{ $booking->email }}</td>
                           <td>{{ $booking->phone }}</td>
                           <td>{{ $booking->city }}</td>

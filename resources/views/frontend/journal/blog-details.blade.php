@@ -32,9 +32,9 @@
     data-bg="{{ asset('assets/admin/img/' . $basicInfo->breadcrumb) }}">
     <div class="container">
       <div class="banner-inner">
-        <h1 class="page-title">
-          {{ $details->title }}
-        </h1>
+        <h2 class="page-title">
+          {{ strlen($details->title) > 30 ? mb_substr($details->title, 0, 30, 'UTF-8') . '...' : $details->title }}
+        </h2>
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('index') }}">{{ __('Home') }}</a></li>

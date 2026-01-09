@@ -33,7 +33,8 @@ class Event extends Model
     'ticket_image',
     'instructions',
     'meeting_url',
-    'ticket_logo'
+    'ticket_logo',
+    'ticket_slot_image'
   ];
   public function ticket()
   {

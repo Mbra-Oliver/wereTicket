@@ -2,8 +2,8 @@
 
 namespace App\Models\Event;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class EventContent extends Model
 {
@@ -23,6 +23,9 @@ class EventContent extends Model
     'meta_description',
     'google_calendar_id',
     'refund_policy',
+    'country_id',
+    'state_id',
+    'city_id',
   ];
 
   public function tickets()

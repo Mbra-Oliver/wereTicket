@@ -22,7 +22,10 @@ class SectionTitle extends Model
     'featured_instructors_section_title',
     'testimonials_section_title',
     'features_section_title',
-    'blog_section_title'
+    'blog_section_title',
+    'category_title',
+    'upcoming_event_title',
+    'features_title',
   ];
 
   public function language()

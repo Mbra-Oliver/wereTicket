@@ -12,6 +12,8 @@
 <link rel="stylesheet" href="{{ asset('assets/front/css/magnific-popup.min.css') }}">
 <!-- Slick Slider -->
 <link rel="stylesheet" href="{{ asset('assets/front/css/slick.css') }}">
+<!-- Swiper CSS -->
+<link rel="stylesheet" href="{{ asset('assets/front/css/swiper-bundle.min.css') }}">
 <!-- jQuery UI CSS -->
 <link rel="stylesheet" href="{{ asset('assets/front/css/jquery-ui.min.css') }}">
 <!-- Padding Margin -->
@@ -21,6 +23,10 @@
 <!-- datatables css -->
 <link rel="stylesheet" href="{{ asset('assets/front/css/datatables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/front/css/dataTables.bootstrap4.css') }}">
+<!-- Select2 -->
+<link rel="stylesheet" href="{{ asset('assets/front/css/select2.min.css') }}">
+<!-- nice-select -->
+<link rel="stylesheet" href="{{ asset('assets/front/css/nice-select.css') }}">
 <!-- dashboard css -->
 <link rel="stylesheet" href="{{ asset('assets/front/css/dashboard.css') }}">
 <!-- Menu css -->

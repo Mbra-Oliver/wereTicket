@@ -2,19 +2,25 @@
 
 namespace App\Http\Controllers\Frontend;
 
-use App\Http\Controllers\Controller;
-use App\Models\Country;
+use Carbon\Carbon;
 use App\Models\Event;
+use App\Models\Organizer;
 use App\Models\Event\Coupon;
-use App\Models\Event\EventCategory;
-use App\Models\Event\EventContent;
+use App\Models\Event\Ticket;
+use Illuminate\Http\Request;
+use App\Models\Event\Wishlist;
+use App\Http\Helpers\GeoSearch;
+use App\Models\Event\EventCity;
 use App\Models\Event\EventDates;
 use App\Models\Event\EventImage;
-use App\Models\Event\Ticket;
-use App\Models\Event\Wishlist;
-use App\Models\Organizer;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
+use App\Models\Event\EventState;
+use App\Models\Event\EventContent;
+use App\Models\Event\EventCountry;
+use Illuminate\Support\Facades\DB;
+use App\Models\Event\EventCategory;
+use App\Http\Controllers\Controller;
+use App\Models\Event\Slot;
+use App\Models\Event\SlotImage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -32,12 +38,44 @@ class EventController extends Controller
     $information  = [];
     $categories = EventCategory::where([['language_id', $language->id], ['status', 1]])->orderBy('serial_number', 'asc')->get();
     $information['categories'] = $categories;
-    $countries = Country::get();
-    $information['countries'] = $countries;
 
 
     //for filter
-    $category = $location =  $event_type = $min = $max = $keyword = $date1 = $date2 = null;
+    $category = $location =  $event_type = $min = $max = $keyword = $date1 = $date2 = $country_id = $state_id = $city_id = null;
+
+    if ($request->country) {
+      $country_id = EventCountry::where('language_id', $language->id)
+        ->where('slug', $request->country)
+        ->value('id');
+    }
+
+    if ($request->state) {
+      $state_id = EventState::where('language_id', $language->id)
+        ->where('slug', $request->state)
+        ->value('id');
+    }
+
+    if ($request->city) {
+      $city_id = EventCity::where('language_id', $language->id)
+        ->where('slug', $request->city)
+        ->value('id');
+    }
+
+    $cscIds = [];
+    $cscQuery = EventContent::where('language_id', $language->id);
+    if ($country_id) {
+      $cscQuery->where('country_id', $country_id);
+    }
+
+    if ($state_id) {
+      $cscQuery->where('state_id', $state_id);
+    }
+
+    if ($city_id) {
+      $cscQuery->where('city_id', $city_id);
+    }
+    $cscIds = $cscQuery->pluck('event_id')->toArray();
+
 
     if ($request->filled('category')) {
       $category = $request['category'];
@@ -108,6 +146,48 @@ class EventController extends Controller
       }
     }
 
+    $information['countries'] = EventCountry::where([
+      ['language_id', $language->id],
+      ['status', 1]
+    ])
+      ->orderBy('serial_number', 'asc')
+      ->get();
+
+    $information['states'] = EventState::where([
+      ['language_id', $language->id],
+      ['status', 1]
+    ])
+      ->orderBy('serial_number', 'asc')
+      ->get();
+
+    $information['cities'] = EventCity::where([
+      ['language_id', $language->id],
+      ['status', 1]
+    ])
+      ->orderBy('serial_number', 'asc')
+      ->get();
+
+    //search by location
+    $locationEveIds = [];
+    $location = null;
+    $lat_long = [];
+    $bs = DB::table('basic_settings')->select('google_map_status', 'google_map_radius', 'google_map_api_key')->first();
+    $radius = $bs->google_map_status == 1 ? $bs->google_map_radius : 5000;
+
+    if ($request->filled('location')) {
+      $location = $request->location;
+
+      if ($bs->google_map_status == 1) {
+        $lat_long = GeoSearch::getCoordinates($location, $bs->google_map_api_key);
+        // dd($lat_long);
+      } else {
+        $locationEveIds = EventContent::Where('language_id', $language->id)
+          ->where('address', 'like', '%' . $location . '%')
+          ->distinct()
+          ->pluck('event_id')
+          ->toArray();
+      }
+    }
 
     $events = EventContent::join('events', 'events.id', 'event_contents.event_id')
       ->where('event_contents.language_id', $language->id)
@@ -120,8 +200,11 @@ class EventController extends Controller
       ->when(($min && $max), function ($query) use ($eventIds) {
         return $query->whereIn('events.id', $eventIds);
       })
-      ->when($location, function ($query) use ($eventSIds) {
-        return $query->whereIn('events.id', $eventSIds);
+      ->when(($location && $bs->google_map_status == 0), function ($query) use ($locationEveIds) {
+        return $query->whereIn('events.id', $locationEveIds);
+      })
+      ->when(($request->filled('country') || $request->filled('state') || $request->filled('city')), function ($query) use ($cscIds) {
+        return $query->whereIn('events.id', $cscIds);
       })
       ->when(($date1 && $date2), function ($query) use ($eventIds2) {
         return $query->whereIn('events.id', $eventIds2);
@@ -132,8 +215,54 @@ class EventController extends Controller
       ->where('events.status', 1)
       ->whereDate('events.end_date_time', '>=', $this->now_date_time)
       ->select('events.*', 'event_contents.title', 'event_contents.description', 'event_contents.city', 'event_contents.state', 'event_contents.country', 'event_contents.address', 'event_contents.zip_code', 'event_contents.slug')
-      ->orderBy('events.id', 'desc')
-      ->paginate(9);
+      ->orderBy('events.id', 'desc');
+    //condition for geo location search
+    if ($bs->google_map_status == 1) {
+      if ($location && is_array($lat_long) && isset($lat_long['lat'], $lat_long['lng'])) {
+        $events = $events->get()->map(function ($item) use ($lat_long) {
+          $item->distance = round(GeoSearch::getDistance(
+            $item->latitude,
+            $item->longitude,
+            $lat_long['lat'],
+            $lat_long['lng']
+          ));
+
+          return $item;
+        })->filter(function ($item) use ($radius) {
+          $item =  floatval($item->distance) <= $radius;
+          return $item;
+        });
+
+
+        $events = $request->filled('sort') && $request->input('sort') == 'distance-away'
+          ? $events->sortByDesc('distance')
+          : $events->sortBy('distance');
+
+        $events = $events->values(); // Reset keys
+
+        $page = request()->get('page', 1);
+        $perPage = 9;
+        $offset = ($page * $perPage) - $perPage;
+        $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+          $events->slice($offset, $perPage),
+          $events->count(),
+          $perPage,
+          $page,
+          ['path' => request()->url(), 'query' => request()->query()]
+        );
+        $events = $paginated;
+      } elseif ($location && (!isset($lat_long['lat']) || !isset($lat_long['lng']))) {
+        $events = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 9, request('page', 1), [
+          'path' => request()->url(),
+          'query' => request()->query(),
+        ]);
+      } elseif (!$location && (!isset($lat_long['lat']) || !isset($lat_long['lng']))) {
+        $events = $events->paginate(9);
+      }
+    } else {
+      $events = $events->paginate(9);
+    }
+
 
     $max = Ticket::max('f_price');
     $min = Ticket::min('f_price');
@@ -172,7 +301,7 @@ class EventController extends Controller
           ->first();
         if (is_null($content)) {
           Session::flash('alert-type', 'warning');
-          Session::flash('message', 'No event content found for ' . $language->name . ' Language');
+          // Session::flash('message', 'No event content found for ' . $language->name . ' Language');
           return redirect()->route('index');
         }
       } else {
@@ -186,7 +315,7 @@ class EventController extends Controller
           ->first();
         if (is_null($content)) {
           Session::flash('alert-type', 'warning');
-          Session::flash('message', 'No event content found for ' . $language->name . ' Language');
+          // Session::flash('message', 'No event content found for ' . $language->name . ' Language');
           return redirect()->route('index');
         }
       }
@@ -210,11 +339,12 @@ class EventController extends Controller
         ->where('event_contents.event_category_id', $category_id)
         ->where('events.id', '!=', $event_id)
         ->whereDate('events.end_date_time', '>=', $this->now_date_time)
-        ->select('events.*', 'event_contents.title', 'event_contents.description', 'event_contents.slug', 'event_contents.city', 'event_contents.country')
+        ->select('events.*', 'event_contents.title', 'event_contents.description', 'event_contents.slug', 'event_contents.city', 'event_contents.country','event_contents.address')
         ->orderBy('events.id', 'desc')
         ->get();
 
 
+      $information['event_id'] =  $event_id;
       $information['related_events'] = $related_events;
       return view('frontend.event.event-details', $information); //code...
     } catch (\Exception $th) {
@@ -311,5 +441,200 @@ class EventController extends Controller
     } else {
       return redirect()->route('customer.login');
     }
+  }
+  //search country
+  public function getCountry(Request $request)
+  {
+    $search = $request->input('search');
+    $page = $request->input('page', 1);
+    $pageSize = 10;
+
+    $language = $this->getLanguage();
+    $query = EventCountry::where('language_id', $language->id);
+
+    if ($search) {
+      $query->where('name', 'like', "%{$search}%");
+    }
+
+    // Add pagination
+    $countries = $query->skip(($page - 1) * $pageSize)
+      ->take($pageSize + 1)
+      ->get(['id', 'slug', 'name']);
+
+
+    // Check if there's more data
+    $hasMore = count($countries) > $pageSize;
+    $results = $hasMore ? $countries->slice(0, $pageSize) : $countries;
+
+    return response()->json([
+      'results' => $results,
+      'more' => $hasMore
+    ]);
+  }
+
+
+  public function searchSate(Request $request)
+  {
+
+    $search = $request->input('search');
+    $page = $request->input('page', 1);
+    $pageSize = 10;
+
+    $language = $this->getLanguage();
+
+    $country_id = null;
+    if ($request->country) {
+      $country_id = EventCountry::where('language_id', $language->id)
+        ->where('slug', $request->country)
+        ->value('id');
+    }
+
+    $query = EventState::where('language_id', $language->id)
+      ->when($request->country, function ($q) use ($country_id) {
+        return $q->where('country_id', $country_id);
+      });
+
+    if ($search) {
+      $query->where('name', 'like', "%{$search}%");
+    }
+
+    // Add pagination
+    $cities = $query->skip(($page - 1) * $pageSize)
+      ->take($pageSize + 1)
+      ->get(['id', 'slug', 'name']);
+
+    // Check if there's more data
+    $hasMore = count($cities) > $pageSize;
+    $results = $hasMore ? $cities->slice(0, $pageSize) : $cities;
+
+    return response()->json([
+      'results' => $results,
+      'more' => $hasMore
+    ]);
+  }
+
+
+  public function getSearchCity(Request $request)
+  {
+    $search = $request->input('search');
+    $page = $request->input('page', 1);
+    $pageSize = 10;
+
+    $language = $this->getLanguage();
+
+    $state_id = null;
+    if ($request->state) {
+      $state_id = EventState::where('language_id', $language->id)
+        ->where('slug', $request->state)
+        ->value('id');
+    }
+
+    $query = EventCity::where('language_id', $language->id)
+      ->when($request->state, function ($q) use ($state_id) {
+        return $q->where('state_id', $state_id);
+      });
+
+    if ($search) {
+      $query->where('name', 'like', "%{$search}%");
+    }
+
+    // Add pagination
+    $cities = $query->skip(($page - 1) * $pageSize)
+      ->take($pageSize + 1)
+      ->get(['id', 'slug', 'name']);
+
+    // Check if there's more data
+    $hasMore = count($cities) > $pageSize;
+    $results = $hasMore ? $cities->slice(0, $pageSize) : $cities;
+
+    return response()->json([
+      'results' => $results,
+      'more' => $hasMore
+    ]);
+  }
+
+
+  public function slotMapping(Request $request)
+  {
+
+    $ticket_id = $request->ticket_id;
+    $slot_unique_id = $request->slot_unique_id;
+    $event_id = $request->event_id;
+    $ticket = Ticket::find($ticket_id);
+    $seatMappingImage = SlotImage::where([
+      'event_id' => $event_id,
+      'ticket_id' => $ticket_id,
+      'slot_unique_id' => $slot_unique_id,
+    ])->first();
+
+    if (!$seatMappingImage) {
+      return response()->json([
+        'status' => 'error',
+        'message' => "No Seat Available",
+        'slots' => [],
+      ]);
+    }
+
+    $bookedTicketData =  app(\App\Services\BookingServices::class)->getBookingDeactiveData($event_id);
+
+    $data['cover_image'] = $seatMappingImage->image;
+    $data['pricing_type'] = $ticket->pricing_type;
+
+    $slots = Slot::where([
+      'event_id' => $event_id,
+      'ticket_id' => $ticket_id,
+      'slot_unique_id' => $slot_unique_id,
+    ])->with('seats')->get();
+
+    $slots->map(function ($slot) use ($bookedTicketData, $ticket) {
+
+      $slot->slot_name = $slot->name;
+      $slot->slot_type = $slot->type;
+      $slot->filtered_seats->each(function ($item) use ($ticket, $slot, $bookedTicketData) {
+        if ($ticket->early_bird_discount == 'enable') {
+          $discount_date = Carbon::parse($ticket->early_bird_discount_date . $ticket->early_bird_discount_time);
+          if ($ticket->early_bird_discount_type == 'fixed' && !$discount_date->isPast()) {
+            $calculate_price = $item->price - $ticket->early_bird_discount_amount;
+          } elseif ($ticket->early_bird_discount_type == 'percentage' && !$discount_date->isPast()) {
+            $c_price = ($item->price * $ticket->early_bird_discount_amount) / 100;
+            $calculate_price = $item->price - $c_price;
+          } else {
+            $calculate_price =  $item->price;
+          }
+        } else {
+          $calculate_price = $item->price;
+        }
+        $item->payable_price = $calculate_price;
+        $item->seat_type = $slot->type;
+        //when seat is deactive
+        $seat_check_booked =  $item->is_deactive;
+        //when check is_booked
+        if ($seat_check_booked == 0) {
+          $seat_check_booked =  in_array($item->id, $bookedTicketData['seat_ids']) ? 1 : 0;
+        }
+        $item->is_booked = $seat_check_booked;
+        return $item;
+      });
+
+      $check_booked =  $slot->is_deactive;
+      if ($check_booked == 0) {
+        if ($slot->type == 2) {
+          $check_booked = in_array($slot->id, $bookedTicketData['slot_ids']) ? 1 : 0;
+        } else {
+          $check_booked = $slot->seats->count() == $slot->seats->where('is_booked', 1)->count() ? 1 : 0;
+        }
+      }
+      
+      $slot->is_booked = $check_booked;
+      return $slot;
+    });
+
+
+    return response()->json([
+      'status' => 'success',
+      'message' => "",
+      'slots' => json_encode($slots->toArray()),
+      'view' => view('frontend.event.slots.slot-mapping-seat', $data)->render()
+    ]);
   }
 }

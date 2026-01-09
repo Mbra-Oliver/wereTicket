@@ -2,19 +2,20 @@
 
 namespace App\Providers;
 
-use App\Models\BasicSettings\PageHeading;
-use App\Models\BasicSettings\SEO;
-use App\Models\BasicSettings\SocialMedia;
-use App\Models\ContactPage;
-use App\Models\HomePage\Section;
-use App\Models\Journal\Blog;
+use App\Models\BasicSettings\Basic;
 use App\Models\Language;
+use App\Models\ContactPage;
+use App\Models\Journal\Blog;
+use App\Models\HomePage\Section;
+use App\Models\BasicSettings\SEO;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\ServiceProvider;
+use App\Models\BasicSettings\PageHeading;
+use App\Models\BasicSettings\SocialMedia;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -40,8 +41,7 @@ class AppServiceProvider extends ServiceProvider
       # code...
       Paginator::useBootstrap();
 
-      $data = DB::table('basic_settings')->select('favicon', 'website_title', 'logo', 'timezone', 'preloader', 'event_guest_checkout_status', 'primary_color')->first();
-
+      $data = Basic::select('favicon', 'website_title', 'logo', 'timezone', 'preloader', 'event_guest_checkout_status', 'primary_color')->first();
 
       // send this information to only back-end view files
       View::composer('backend.*', function ($view) {
@@ -55,8 +55,17 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $language = Language::where('is_default', 1)->first();
-
-        $websiteSettings = DB::table('basic_settings')->select('admin_theme_version', 'base_currency_symbol_position', 'base_currency_symbol', 'base_currency_text')->first();
+        $websiteSettings =  Basic::select(
+            'event_country_status',
+            'event_state_status',
+            'admin_theme_version',
+            'base_currency_symbol_position',
+            'base_currency_symbol',
+            'base_currency_text',
+            'google_map_status',
+            'google_map_api_key'
+          )
+          ->first();
 
         $footerText = $language->footerContent()->first();
 
@@ -71,12 +80,21 @@ class AppServiceProvider extends ServiceProvider
 
       // send this information to only back-end view files
       View::composer('organizer.*', function ($view) {
-
-
         $language = Language::where('is_default', 1)->first();
-
-        //$websiteSettings = DB::table('basic_settings')->select('admin_theme_version')->first();
-        $websiteSettings = DB::table('basic_settings')->select('admin_theme_version', 'base_currency_symbol', 'base_currency_symbol_position', 'base_currency_text', 'base_currency_text_position', 'base_currency_rate', 'organizer_email_verification')->first();
+        $websiteSettings = Basic::select(
+          'admin_theme_version',
+          'base_currency_symbol',
+          'base_currency_symbol_position',
+          'base_currency_text',
+          'base_currency_text_position',
+          'base_currency_rate',
+          'organizer_email_verification',
+          'event_state_status',
+          'google_map_status',
+          'google_map_api_key',
+          'event_country_status',
+          'event_state_status'
+        )->first();
 
         $footerText = $language->footerContent()->first();
 
@@ -90,7 +108,32 @@ class AppServiceProvider extends ServiceProvider
       // send this information to only front-end view files
       View::composer('frontend.*', function ($view) {
         // get basic info
-        $basicData = DB::table('basic_settings')->select('theme_version', 'footer_logo', 'primary_color', 'breadcrumb_overlay_color', 'breadcrumb_overlay_opacity', 'breadcrumb', 'email_address', 'contact_number', 'address', 'latitude', 'longitude', 'base_currency_symbol', 'base_currency_symbol_position', 'base_currency_text', 'base_currency_text_position', 'base_currency_rate', 'is_shop_rating', 'facebook_login_status', 'google_login_status', 'google_recaptcha_status')->first();
+        $basicData = Basic::select(
+            'theme_version',
+            'footer_logo',
+            'primary_color',
+            'breadcrumb_overlay_color',
+            'breadcrumb_overlay_opacity',
+            'breadcrumb',
+            'email_address',
+            'contact_number',
+            'address',
+            'latitude',
+            'longitude',
+            'base_currency_symbol',
+            'base_currency_symbol_position',
+            'base_currency_text',
+            'base_currency_text_position',
+            'base_currency_rate',
+            'is_shop_rating',
+            'facebook_login_status',
+            'google_login_status',
+            'google_recaptcha_status',
+            'event_country_status',
+            'event_state_status',
+            'google_map_status',
+            'google_map_api_key',
+          )->first();
 
 
         // get all the languages of this system
@@ -185,6 +228,7 @@ class AppServiceProvider extends ServiceProvider
             $view->with('newsletterTitle', $newsletterTitle);
           }
         }
+        
       });
 
 

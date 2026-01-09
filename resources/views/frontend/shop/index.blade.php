@@ -228,11 +228,13 @@
     <button type="submit" id="submitBtn"></button>
   </form>
 @endsection
-
+   
 @section('custom-script')
   <script type="text/javascript" src="{{ asset('assets/front/js/moment.min.js') }}"></script>
   <script type="text/javascript" src="{{ asset('assets/front/js/daterangepicker.min.js') }}"></script>
   <script>
+
+    let  currency_symbol ="{{ $basicInfo->base_currency_symbol }}";
     let min_price = {!! htmlspecialchars($min) !!};
     let max_price = {!! htmlspecialchars($max) !!};
     let curr_min = {!! !empty(request()->input('min')) ? htmlspecialchars(request()->input('min')) : 5 !!};

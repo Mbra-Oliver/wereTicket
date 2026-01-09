@@ -11,7 +11,6 @@
   <!-- Main css -->
   <link rel="stylesheet" href="{{ asset('assets/front/css/style.css') }}">
 </head>
-
 <body>
   <!--    Error section start   -->
   <div class="error-area">

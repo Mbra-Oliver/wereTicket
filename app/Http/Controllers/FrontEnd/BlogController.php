@@ -41,7 +41,7 @@ class BlogController extends Controller
       })
       ->select('blogs.image', 'blogs.created_at', 'blog_informations.title', 'blog_informations.slug', 'blog_informations.content', 'blog_categories.name as categoryName', 'blog_categories.slug as categorySlug')
       ->orderBy('blogs.serial_number', 'asc')
-      ->paginate(24);
+      ->paginate(6);
 
     $queryResult['categories'] = $this->getCategories($language);
 

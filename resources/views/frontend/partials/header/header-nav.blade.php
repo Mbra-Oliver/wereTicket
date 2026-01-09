@@ -58,6 +58,14 @@
               </ul>
 
               <div class="menu-right">
+                <form action="{{ route('change_language') }}" method="get">
+                  <select name="lang_code" id="language" class="form-control" onchange="this.form.submit()">
+                    @foreach ($allLanguageInfos as $item)
+                      <option value="{{ $item->code }}"
+                        {{ $item->code == $currentLanguageInfo->code ? 'selected' : '' }}>{{ $item->name }}</option>
+                    @endforeach
+                  </select>
+                </form>
                 @if (!Auth::guard('customer')->check())
                   <div class="dropdown">
                     <button type="button" class="menu-btn dropdown-toggle mr-1"

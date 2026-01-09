@@ -42,11 +42,23 @@ class CronJobController extends Controller
     public function sendTicket()
     {
         try {
-
             Artisan::call('queue:work', [
                 '--stop-when-empty' => true, // To avoid infinite running in case
             ]);
         } catch (\Throwable $th) {
+          
         }
     }
+
+    public function sendPushNotificationPhone()
+    {
+      try {
+
+        Artisan::call('queue:work', [
+          '--stop-when-empty' => true, // To avoid infinite running in case
+        ]);
+      } catch (\Throwable $th) {
+      }
+    }
+
 }

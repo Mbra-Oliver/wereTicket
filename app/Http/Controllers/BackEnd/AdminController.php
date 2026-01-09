@@ -170,10 +170,10 @@ class AdminController extends Controller
     $information['total_earning'] = Earning::first();
 
 
-    //income of event bookings 
+    //income of event bookings
     $eventBookingTotalIncomes = DB::table('bookings')
       ->select(DB::raw('month(created_at) as month'), DB::raw('sum(price) as total'))
-      ->where('paymentStatus', '=', 'completed')
+      ->where('paymentStatus',  '=', 'completed')
       ->groupBy('month')
       ->whereYear('created_at', '=', date('Y'))
       ->get();
@@ -192,7 +192,7 @@ class AdminController extends Controller
       ->whereYear('created_at', '=', date('Y'))
       ->get();
 
-    //income of Product Order 
+    //income of Product Order
     $produtOrderTotalIncomes = DB::table('product_orders')
       ->select(DB::raw('month(created_at) as month'), DB::raw('sum(total) as total'))
       ->where('payment_status', '=', 'completed')
@@ -266,7 +266,7 @@ class AdminController extends Controller
         array_push($totalBookings, 0);
       }
 
-      // get all 12 months's 
+      // get all 12 months's
       $orderFound = false;
 
       foreach ($produtOrderTotalIncomes as $productInfo) {
@@ -280,7 +280,7 @@ class AdminController extends Controller
       if ($orderFound == false) {
         array_push($productIncome, 0);
       }
-      // get all 12 months's 
+      // get all 12 months's
       $orderTotalFound = false;
 
       foreach ($totalProductOrder as $productTotalInfo) {
@@ -427,7 +427,7 @@ class AdminController extends Controller
     return redirect()->route('admin.login');
   }
 
-  //transcation 
+  //transcation
   public function transcation(Request $request)
   {
     $transcation_id = null;
@@ -649,7 +649,7 @@ class AdminController extends Controller
       $unique_id = $ids[1];
       $check = Booking::where([['booking_id', $booking_id]])->first();
       if ($check) {
-        // check payment status completed or not 
+        // check payment status completed or not
         if ($check->paymentStatus == 'completed' || $check->paymentStatus == 'free') {
           //check scanned_tickets column empty or not
           if (is_null($check->scanned_tickets)) {
@@ -662,7 +662,7 @@ class AdminController extends Controller
           } else {
             //ticket random id will be insert
             $scannedTicketArr = json_decode($check->scanned_tickets, true);
-            if (!in_array($unique_id, $scannedTicketArr)) {
+            if (! in_array($unique_id, $scannedTicketArr)) {
               array_push($scannedTicketArr, $unique_id);
               $check->scanned_tickets = json_encode($scannedTicketArr);
               $check->save();

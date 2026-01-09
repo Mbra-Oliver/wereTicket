@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
+use stdClass;
 
 class Controller extends BaseController
 {
@@ -148,4 +149,6 @@ class Controller extends BaseController
       'success' => 'You have successfully subscribed to our newsletter.'
     ], 200);
   }
+
+
 }

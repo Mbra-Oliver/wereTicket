@@ -375,66 +375,75 @@
         </div>
       </div>
     </div>
+
     @if ($booking->variation != null)
-      <div class="col-md-6">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title d-inline-block">
-              {{ __('Tickets Info') }}
-            </div>
-          </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title d-inline-block">
+                        {{ __('Tickets Info') }}
+                    </div>
+                </div>
 
-          <div class="card-body">
-            <div class="payment-information">
-              <table class="table">
-                <tr>
-                  <th>{{ __('Ticket') }}</th>
-                  <th>{{ __('Quantity') }}</th>
-                  <th>{{ __('Price') }}</th>
-                </tr>
-                @if ($booking->variation != null)
-                  @php
-                    $variations = json_decode($booking->variation, true);
-                  @endphp
-                  @foreach ($variations as $variation)
-                    <tr>
-                      <td>
-                        @php
-                          $ticket_content = App\Models\Event\TicketContent::where([
-                              ['ticket_id', $variation['ticket_id']],
-                              ['language_id', $defaultLang->id],
-                          ])->first();
+                <div class="card-body">
+                    <div class="payment-information">
+                        <table class="table">
+                            <tr>
+                                <th>{{ __('Ticket') }}</th>
+                                <th>{{ __('Quantity') }}</th>
+                                <th>{{ __('Price') }}</th>
+                            </tr>
+                            @if ($booking->variation != null)
+                                @php
+                                    $variations = json_decode($booking->variation, true);
+                                @endphp
+                                @foreach ($variations as $variation)
+                                    <tr>
+                                        <td>
+                                            @php
+                                                $ticket_content = App\Models\Event\TicketContent::where([
+                                                    ['ticket_id', $variation['ticket_id']],
+                                                    ['language_id', $defaultLang->id],
+                                                ])->first();
 
-                          $ticket = App\Models\Event\Ticket::where('id', $variation['ticket_id'])
-                              ->select('pricing_type')
-                              ->first();
-                        @endphp
-                        @if ($ticket_content && $ticket->pricing_type == 'variation')
-                          {{ $ticket_content->title }} -
-                        @endif
-                        <small>{{ $variation['name'] }}</small>
-                      </td>
-                      <td>
-                        {{ $variation['qty'] }}
-                      </td>
-                      <td>
-                        @php
-                          $evd = $variation['early_bird_dicount'] / $variation['qty'];
-                        @endphp
-                        {{ symbolPrice($variation['price'] - $evd) }}
-                        @if ($variation['early_bird_dicount'] != null)
-                          <del>{{ symbolPrice($variation['price']) }}</del>
-                        @endif
-                      </td>
-                    </tr>
-                  @endforeach
-                @endif
-              </table>
+                                                $ticket = App\Models\Event\Ticket::where(
+                                                    'id',
+                                                    $variation['ticket_id'],
+                                                )
+                                                    ->select('pricing_type')
+                                                    ->first();
+                                            @endphp
+                                            @if ($ticket_content && $ticket->pricing_type == 'variation')
+                                                {{ $ticket_content->title }} -
+                                            @endif
+                                            <small>{{ $variation['name'] }}</small>
+                                            @if (array_key_exists('slot_name', $variation) && array_key_exists('seat_name', $variation))
+                                                <p style="font-family: italic">
+                                                    <small>{{ __('Slot Name') }}:{{ $variation['slot_name'] }}</small>
+                                                    <small>{{ __('Seat Name') }}:{{ $variation['seat_name'] }}</small>
+                                                </p>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            {{ $variation['qty'] }}
+                                        </td>
+                                        <td>
+                                            @php
+                                                $evd = $variation['early_bird_dicount'] / $variation['qty'];
+                                            @endphp
+                                            {{ symbolPrice($variation['price'] - $evd) }}
+                                            @if ($variation['early_bird_dicount'] != null)
+                                                <del>{{ symbolPrice($variation['price']) }}</del>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+                        </table>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
     @endif
-
   </div>
 @endsection

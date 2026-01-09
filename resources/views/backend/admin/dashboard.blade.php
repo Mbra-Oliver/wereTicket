@@ -48,7 +48,7 @@
     @if (is_null($roleInfo) || (!empty($rolePermissions) && in_array('Total Profit', $rolePermissions)))
       <div class="col-sm-6 col-md-4">
         <a href="{{ route('admin.monthly_profit') }}">
-          <div class="card card-stats card-earning card-round">
+          <div class="card card-stats card-earning card-round text-white ">
             <div class="card-body">
               <div class="row">
                 <div class="col-5">
@@ -59,8 +59,8 @@
 
                 <div class="col-7 col-stats">
                   <div class="numbers">
-                    <p class="card-category">{{ __('Total Profit') }}</p>
-                    <h4 class="card-title">
+                    <p class="card-category text-white">{{ __('Total Profit') }}</p>
+                    <h4 class="card-title text-white">
                       {{ $settings->base_currency_symbol_position == 'left' ? $settings->base_currency_symbol : '' }}
                       {{ $total_earning->total_earning }}
                       {{ $settings->base_currency_symbol_position == 'right' ? $settings->base_currency_symbol : '' }}

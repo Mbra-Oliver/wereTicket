@@ -148,21 +148,18 @@ class ToyyibpayController extends Controller
             // get the information from session
             $event_id = Session::get('event_id');
             $arrData = Session::get('arrData');
-            $booking = new BookingController();
+             $enrol = new BookingController();
 
             // store the course enrolment information in database
-            $bookingInfo = $booking->storeData($arrData);
+            $bookingInfo = $enrol->storeData($arrData);
 
             $ticket = DB::table('basic_settings')->select('how_ticket_will_be_send')->first();
 
             if ($ticket->how_ticket_will_be_send == 'instant') {
                 // generate an invoice in pdf format
-                $invoice = $booking->generateInvoice($bookingInfo, $bookingInfo->event_id);
-
-                //unlink qr code 
-                if (
-                    $bookingInfo->variation != null
-                ) {
+                $invoice = $enrol->generateInvoice($bookingInfo, $bookingInfo->event_id);
+                //unlink qr code
+                if ($bookingInfo->variation != null) {
                     //generate qr code for without wise ticket
                     $variations = json_decode($bookingInfo->variation, true);
                     foreach ($variations as $variation) {
@@ -180,8 +177,8 @@ class ToyyibpayController extends Controller
                 $bookingInfo->invoice = $invoice;
                 $bookingInfo->save();
 
-                // send a mail to the customer with the invoice
-                $booking->sendMail($bookingInfo);
+            // send a mail to the customer with the invoice
+            $enrol->sendMail($bookingInfo);
             } else {
                 BookingInvoiceJob::dispatch($bookingInfo->id)->delay(now()->addSeconds(10));
             }

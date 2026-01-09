@@ -490,6 +490,7 @@
     "use strict";
     var storeUrl = "{{ route('organizer.event.imagesstore') }}";
     var removeUrl = "{{ route('organizer.event.imagermv') }}";
+    var edit_event_page = 0
   </script>
 @endsection
 

@@ -2,21 +2,24 @@
 
 namespace App\Http\Controllers\BackEnd;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\Language\StoreRequest;
-use App\Http\Requests\Language\UpdateRequest;
-use App\Models\CustomPage\Page;
-use App\Models\CustomPage\PageContent;
-use App\Models\Event\EventContent;
-use App\Models\Journal\Blog;
-use App\Models\Journal\BlogInformation;
 use App\Models\Language;
 use App\Models\MenuBuilder;
-use App\Models\ShopManagement\ProductContent;
+use App\Models\Journal\Blog;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Response;
+use App\Models\CustomPage\Page;
+use App\Models\Event\EventState;
+use App\Models\Event\EventContent;
+use App\Models\Event\EventCountry;
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use App\Models\CustomPage\PageContent;
+use App\Models\Journal\BlogInformation;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\Language\StoreRequest;
+use App\Http\Requests\Language\UpdateRequest;
+use App\Models\ShopManagement\ProductContent;
 
 class LanguageController extends Controller
 {
@@ -66,23 +69,52 @@ class LanguageController extends Controller
     $data[] = ['text' => 'Home', "href" => "", "icon" => "empty", "target" => "_self", "title" => "", "type" => "home"];
 
     $data[] = [
-      'text' => 'Events', "href" => "events", "icon" => "empty", "target" => "_self", "title" => "", "type" => "events"
+      'text' => 'Events',
+      "href" => "events",
+      "icon" => "empty",
+      "target" => "_self",
+      "title" => "",
+      "type" => "events"
     ];
 
     $data[] = [
-      'text' => 'Shop', "href" => "shop", "icon" => "empty", "target" => "_self", "title" => "", "type" => "shop"
+      'text' => 'Shop',
+      "href" => "shop",
+      "icon" => "empty",
+      "target" => "_self",
+      "title" => "",
+      "type" => "shop"
     ];
     $data[] = [
-      'text' => 'Organizers',  "icon" => "empty", "target" => "_self", "title" => "", "type" => "organizers"
+      'text' => 'Organizers',
+      "icon" => "empty",
+      "target" => "_self",
+      "title" => "",
+      "type" => "organizers"
     ];
     $data[] = [
-      'text' => 'Cart', "href" => "shop/cart", "icon" => "empty", "target" => "_self", "title" => "", "type" => "cart"
+      'text' => 'Cart',
+      "href" => "shop/cart",
+      "icon" => "empty",
+      "target" => "_self",
+      "title" => "",
+      "type" => "cart"
     ];
     $data[] = [
-      'text' => 'Blog', "href" => "", "icon" => "empty", "target" => "_self", "title" => "", "type" => "blog"
+      'text' => 'Blog',
+      "href" => "",
+      "icon" => "empty",
+      "target" => "_self",
+      "title" => "",
+      "type" => "blog"
     ];
     $data[] = [
-      'text' => 'Contact', "href" => "", "icon" => "empty", "target" => "_self", "title" => "", "type" => "contact"
+      'text' => 'Contact',
+      "href" => "",
+      "icon" => "empty",
+      "target" => "_self",
+      "title" => "",
+      "type" => "contact"
     ];
 
     MenuBuilder::create([
@@ -562,12 +594,22 @@ class LanguageController extends Controller
    * @param  int  $id
    * @return \Illuminate\Http\Response
    */
-  public function checkRTL($id)
+  public function checkRTL($id, Request $request)
   {
     if (!is_null($id)) {
-      $direction = Language::where('id', $id)->pluck('direction')->first();
+      $lang = Language::where('id', $id)->select('id', 'direction')->first();
+      $direction = $lang->direction;
 
-      return response()->json(['successData' => $direction], 200);
+      $bs = DB::table('basic_settings')
+        ->select('event_country_status', 'event_state_status')->first();
+
+      $country = $bs->event_country_status == 1 ?
+        ($request->country ? EventCountry::where('language_id', $id)->select('id', 'name')->exists() : null) : null;
+
+      $state = $bs->event_state_status == 1 ?
+        ($request->state ? EventState::where('language_id', $id)->select('id', 'name')->exists() : null) : null;
+
+      return response()->json(['successData' => $direction, 'country' => $country, 'state' => $state], 200);
     } else {
       return response()->json(['errorData' => 'Sorry, an error has occured!'], 400);
     }
