@@ -111,6 +111,9 @@ class CinetPayController extends Controller
 
             // $payable_amount doit être défini avant
 
+            // Convertir le pays en code ISO-2 en majuscules
+            $countryCode = self::getCountryCodeISO2($request->country ?? 'CI');
+
             $dataToSend = [
                 'transaction_id' => $bookingInfo->booking_id, // Utiliser -> car bookingInfo est un objet
                 'amount' => $payable_amount, // Corrigé pour utiliser la vraie variable
@@ -122,7 +125,7 @@ class CinetPayController extends Controller
                 'customer_address' => $request->address,
                 'customer_city' => $request->city ?? $request->address,
                 'customer_state' => $request->state ?? '',
-                'customer_country' => $request->country ?? 'CI',
+                'customer_country' => $countryCode,
                 'invoice_data' => [
                     'id' => $event_id,
                     'name' => $product->event_type ?? 'Event',
@@ -468,5 +471,137 @@ public function returnFromPayment($bookingId)
     public function cancel()
     {
         return redirect()->route('check-out')->with('error', 'Paiement annulé.');
+    }
+
+    /**
+     * Convertit un nom de pays ou code pays en code ISO-2 en majuscules
+     * 
+     * @param string $country Le nom du pays ou le code pays
+     * @return string Code ISO-2 en majuscules (ex: "CI", "FR", "US")
+     */
+    private static function getCountryCodeISO2($country)
+    {
+        // Si c'est déjà un code ISO-2 (2 caractères), le convertir en majuscules
+        if (strlen(trim($country)) == 2) {
+            return strtoupper(trim($country));
+        }
+
+        // Mapping des noms de pays vers codes ISO-2
+        $countryMapping = [
+            // Afrique de l'Ouest
+            'côte d\'ivoire' => 'CI',
+            'cote d\'ivoire' => 'CI',
+            'ivory coast' => 'CI',
+            'senegal' => 'SN',
+            'sénégal' => 'SN',
+            'mali' => 'ML',
+            'burkina faso' => 'BF',
+            'niger' => 'NE',
+            'guinea' => 'GN',
+            'guinée' => 'GN',
+            'benin' => 'BJ',
+            'bénin' => 'BJ',
+            'togo' => 'TG',
+            'ghana' => 'GH',
+            'nigeria' => 'NG',
+            'cameroon' => 'CM',
+            'cameroun' => 'CM',
+            
+            // Europe
+            'france' => 'FR',
+            'spain' => 'ES',
+            'espagne' => 'ES',
+            'italy' => 'IT',
+            'italie' => 'IT',
+            'germany' => 'DE',
+            'allemagne' => 'DE',
+            'united kingdom' => 'GB',
+            'royaume-uni' => 'GB',
+            'belgium' => 'BE',
+            'belgique' => 'BE',
+            'switzerland' => 'CH',
+            'suisse' => 'CH',
+            
+            // Amériques
+            'united states' => 'US',
+            'états-unis' => 'US',
+            'canada' => 'CA',
+            'mexico' => 'MX',
+            'mexique' => 'MX',
+            'brazil' => 'BR',
+            'brésil' => 'BR',
+            
+            // Asie
+            'china' => 'CN',
+            'chine' => 'CN',
+            'japan' => 'JP',
+            'japon' => 'JP',
+            'india' => 'IN',
+            'inde' => 'IN',
+            'south korea' => 'KR',
+            'corée du sud' => 'KR',
+            
+            // Autres
+            'australia' => 'AU',
+            'australie' => 'AU',
+            'south africa' => 'ZA',
+            'afrique du sud' => 'ZA',
+            'egypt' => 'EG',
+            'egypte' => 'EG',
+            'morocco' => 'MA',
+            'maroc' => 'MA',
+            'algeria' => 'DZ',
+            'algérie' => 'DZ',
+            'tunisia' => 'TN',
+            'tunisie' => 'TN',
+        ];
+
+        // Normaliser l'entrée : minuscules et suppression des accents
+        $normalizedCountry = mb_strtolower(trim($country));
+        $normalizedCountry = self::removeAccents($normalizedCountry);
+
+        // Chercher dans le mapping
+        if (isset($countryMapping[$normalizedCountry])) {
+            return $countryMapping[$normalizedCountry];
+        }
+
+        // Si non trouvé, essayer de chercher par correspondance partielle
+        foreach ($countryMapping as $name => $code) {
+            if (strpos($normalizedCountry, $name) !== false || strpos($name, $normalizedCountry) !== false) {
+                return $code;
+            }
+        }
+
+        // Par défaut, retourner CI (Côte d'Ivoire) si non trouvé
+        Log::warning('Code pays ISO-2 non trouvé', ['country' => $country]);
+        return 'CI';
+    }
+
+    /**
+     * Supprime les accents d'une chaîne
+     * 
+     * @param string $string
+     * @return string
+     */
+    private static function removeAccents($string)
+    {
+        $accents = [
+            'à' => 'a', 'á' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a', 'å' => 'a',
+            'è' => 'e', 'é' => 'e', 'ê' => 'e', 'ë' => 'e',
+            'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i',
+            'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o',
+            'ù' => 'u', 'ú' => 'u', 'û' => 'u', 'ü' => 'u',
+            'ý' => 'y', 'ÿ' => 'y',
+            'ç' => 'c', 'ñ' => 'n',
+            'À' => 'A', 'Á' => 'A', 'Â' => 'A', 'Ã' => 'A', 'Ä' => 'A', 'Å' => 'A',
+            'È' => 'E', 'É' => 'E', 'Ê' => 'E', 'Ë' => 'E',
+            'Ì' => 'I', 'Í' => 'I', 'Î' => 'I', 'Ï' => 'I',
+            'Ò' => 'O', 'Ó' => 'O', 'Ô' => 'O', 'Õ' => 'O', 'Ö' => 'O',
+            'Ù' => 'U', 'Ú' => 'U', 'Û' => 'U', 'Ü' => 'U',
+            'Ý' => 'Y',
+            'Ç' => 'C', 'Ñ' => 'N',
+        ];
+
+        return strtr($string, $accents);
     }
 }
